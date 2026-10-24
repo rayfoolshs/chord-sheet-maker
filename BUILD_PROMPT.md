@@ -22,6 +22,7 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 
 ## Editor UI
 
+- Header brand lockup: "Chord Sheet Studio" logo/title with a "Created by Ray Foo · www.rayfooproductions.com" credit line beneath it (link opens in a new tab), plus Reset and Print/Save PDF actions.
 - Song title input (blank falls back to "Untitled Song").
 - Segmented controls for "Chords per row" (1–8) and "Piano fingering" (RH/LH).
 - A progression grid of inputs (up to 12 rows × 8 columns) with row numbers, per-row remove buttons, and an "Add row" button that disables at the limit.
