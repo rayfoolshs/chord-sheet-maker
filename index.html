@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2ede4">
+  <meta name="description" content="Turn a chord progression into a printable guitar and keyboard chord sheet with fingering.">
+  <title>Chord Sheet Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="Chord Sheet Studio home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 44 44" role="presentation">
+          <rect x="2" y="2" width="40" height="40" rx="13"></rect>
+          <path d="M13 9v26M21 9v26M29 9v26M9 16h26M9 23h26M9 30h26"></path>
+          <circle cx="21" cy="23" r="4.5"></circle>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <span class="brand-name">Chord Sheet <em>Studio</em></span>
+        <span class="brand-tagline">Guitar + keyboard charts, ready to print</span>
+      </span>
+    </a>
+    <div class="header-actions">
+      <button class="btn btn-quiet" id="resetBtn" type="button">Reset example</button>
+      <button class="btn btn-primary" id="printBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7z"></path></svg>
+        Print / Save PDF
+      </button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="editor-card" aria-labelledby="editorHeading">
+      <div class="editor-heading">
+        <div>
+          <p class="eyebrow">Build your chart</p>
+          <h2 id="editorHeading">Song &amp; progression</h2>
+        </div>
+        <p class="editor-note">Fingerings update automatically</p>
+      </div>
+
+      <div class="field-grid">
+        <label class="field field-title">
+          <span>Song title</span>
+          <input id="titleInput" type="text" maxlength="80" autocomplete="off" spellcheck="false" value="I Got A Feeling">
+        </label>
+
+        <div class="field">
+          <span id="columnsLabel">Chords per row</span>
+          <div class="segmented" id="columnControl" role="group" aria-labelledby="columnsLabel">
+            <button type="button" data-columns="1">1</button>
+            <button type="button" data-columns="2">2</button>
+            <button type="button" data-columns="3">3</button>
+            <button type="button" data-columns="4">4</button>
+            <button type="button" data-columns="5">5</button>
+            <button type="button" data-columns="6">6</button>
+            <button type="button" data-columns="7">7</button>
+            <button type="button" data-columns="8">8</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span id="handLabel">Piano fingering</span>
+          <div class="segmented segmented-hand" id="handControl" role="group" aria-labelledby="handLabel">
+            <button type="button" data-hand="right">RH</button>
+            <button type="button" data-hand="left">LH</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="progression-panel">
+        <div class="panel-heading">
+          <span>Chord progression</span>
+          <span id="slotHint">4 slots per row</span>
+        </div>
+        <div class="progression-scroll">
+          <div id="progressionEditor" class="progression-editor"></div>
+        </div>
+        <div class="editor-footer">
+          <p class="hint">Try C, Am, F#m7, Bb, or G/B. You can paste a line like <strong>G G C C</strong> into any slot.</p>
+          <button class="btn btn-add" id="addRowBtn" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Add row
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-section" aria-labelledby="previewHeading">
+      <div class="preview-heading">
+        <div>
+          <p class="eyebrow">Live preview</p>
+          <h2 id="previewHeading">Your chord sheet</h2>
+        </div>
+        <span class="preview-badge">A4 portrait · diagrams scale to fit</span>
+      </div>
+      <div class="paper" id="paper"></div>
+    </section>
+  </main>
+
+  <datalist id="chordSuggestions"></datalist>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="chords.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
