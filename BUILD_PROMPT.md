@@ -33,7 +33,7 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 
 ## Live preview (A4 paper)
 
-- Centered paper sheet with the song title, Guitar diagram section, a divider rule, Keyboard diagram section, a Chord Progression table, and a footer link to `www.rayfooproductions.com`.
+- Centered paper sheet with the song title, Guitar diagram section, a divider rule, Keyboard diagram section, a Chord Progression table, and a footer attributing "Created by Ray Foo" with a link to `www.rayfooproductions.com`.
 - Show only unique chords (dedupe by root + quality + bass), up to 8 per grid row.
 - Guitar cards: SVG fretboard (6 strings, 5 frets, nut, open/muted markers, finger-numbered dots, barre bars, `Nfr` label for higher positions), chord name and enharmonic note caption.
 - Piano cards: SVG keyboard from C4 to B5 with black keys, red dots numbered with the chosen hand's fingering, chord name, note caption, and fingering caption.

@@ -357,6 +357,8 @@
     const titleMarkup = '<h1 class="sheet-title">' + escapeHtml(title) + "</h1>";
     const footerMarkup =
       '<footer class="sheet-footer">' +
+        "<span>Created by Ray Foo</span>" +
+        '<span class="footer-dot" aria-hidden="true">·</span>' +
         '<a href="https://www.rayfooproductions.com" target="_blank" rel="noopener noreferrer">www.rayfooproductions.com</a>' +
       "</footer>";
 
