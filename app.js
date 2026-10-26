@@ -5,6 +5,7 @@
   const STORAGE_KEY = "chord-sheet-studio:v1";
   const MAX_COLUMNS = 8;
   const MAX_ROWS = 12;
+  const DIAGRAMS_PER_ROW = 5;
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -427,9 +428,10 @@
   }
 
   function diagramGrid(items, type) {
+    const columns = Math.min(DIAGRAMS_PER_ROW, items.length) || 1;
     const chunks = [];
-    for (let index = 0; index < items.length; index += MAX_COLUMNS) {
-      chunks.push(items.slice(index, index + MAX_COLUMNS));
+    for (let index = 0; index < items.length; index += DIAGRAMS_PER_ROW) {
+      chunks.push(items.slice(index, index + DIAGRAMS_PER_ROW));
     }
     return chunks.map(function (chunk) {
       const cells = chunk.map(function (item) {
@@ -437,7 +439,10 @@
           ? guitarCard(item.raw, item.chord)
           : pianoCard(item.raw, item.chord);
       }).join("");
-      return '<div class="chord-grid ' + type + '-grid" style="--cols:' + chunk.length + '">' + cells + "</div>";
+      const pad = columns - chunk.length;
+      const spacer = '<div class="grid-spacer" aria-hidden="true"></div>';
+      return '<div class="chord-grid ' + type + '-grid" style="--cols:' + columns + '">' +
+        cells + repeatMarkup(spacer, pad) + "</div>";
     }).join("");
   }
 
@@ -654,6 +659,12 @@
     const copy = row.slice();
     while (copy.length && !copy[copy.length - 1]) copy.pop();
     return copy;
+  }
+
+  function repeatMarkup(markup, count) {
+    let output = "";
+    for (let index = 0; index < count; index += 1) output += markup;
+    return output;
   }
 
   function clamp(value, min, max) {

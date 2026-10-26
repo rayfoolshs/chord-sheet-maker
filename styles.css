@@ -143,6 +143,21 @@ a:focus-visible {
   font-style: italic;
 }
 
+.brand-version {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  vertical-align: 0.24em;
+  white-space: nowrap;
+}
+
 .brand-tagline {
   color: var(--muted);
   font-size: 11px;
@@ -1014,6 +1029,10 @@ a:focus-visible {
 
   .chord-grid {
     gap: 8px;
+  }
+
+  .grid-spacer {
+    display: none;
   }
 
   .guitar-grid {
