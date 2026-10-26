@@ -6,7 +6,22 @@ All notable changes to Chord Sheet Studio are recorded here. Versions follow
 The release number is defined once, in `<meta name="app-version">` in
 `index.html`. `app.js` reads it and drives the page title, the header version
 badge, and the brand link's accessible name, so bumping that meta tag is all
-that is needed for a release.
+that is needed for a release. When releasing, also bump the `?v=` query string
+on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
+assets for ten minutes and the query string is what makes a new deploy visible
+immediately.
+
+## [1.2.1] - 2026-10-26
+
+### Fixed
+
+- The Guitar and Keyboard switches are now real `role="switch"` buttons, so the
+  whole control is clickable/tappable and keyboard operable, instead of relying
+  on label-plus-hidden-checkbox behaviour.
+- Versioned asset URLs (`styles.css?v=1.2.1`, `chords.js?v=1.2.1`,
+  `app.js?v=1.2.1`) so GitHub Pages' ten-minute cache can no longer serve an
+  old script against a new page — the cause of switches that appeared but did
+  nothing after a deploy.
 
 ## [1.2] - 2026-10-26
 

@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f2ede4">
   <meta name="description" content="Turn a chord progression into a printable guitar and keyboard chord sheet with fingering.">
-  <meta name="app-version" content="1.2">
-  <title>Chord Sheet Studio v1.2</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="app-version" content="1.2.1">
+  <title>Chord Sheet Studio v1.2.1</title>
+  <link rel="stylesheet" href="styles.css?v=1.2.1">
 </head>
 <body>
   <header class="app-header">
     <div class="brand-lockup">
-      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.2 home">
+      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.2.1 home">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 44 44" role="presentation">
             <rect x="2" y="2" width="40" height="40" rx="13"></rect>
@@ -21,7 +21,7 @@
           </svg>
         </span>
         <span class="brand-copy">
-          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.2</span></span>
+          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.2.1</span></span>
           <span class="brand-tagline">Guitar + keyboard charts, ready to print</span>
         </span>
       </a>
@@ -29,16 +29,14 @@
     </div>
     <div class="header-actions">
       <div class="display-toggles" role="group" aria-label="Show sections in chord sheet">
-        <label class="toggle" for="guitarToggle">
-          <input class="toggle-input" type="checkbox" id="guitarToggle" checked>
+        <button class="toggle" id="guitarToggle" type="button" role="switch" aria-checked="true">
           <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
           <span class="toggle-label">Guitar</span>
-        </label>
-        <label class="toggle" for="keyboardToggle">
-          <input class="toggle-input" type="checkbox" id="keyboardToggle" checked>
+        </button>
+        <button class="toggle" id="keyboardToggle" type="button" role="switch" aria-checked="true">
           <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
           <span class="toggle-label">Keyboard</span>
-        </label>
+        </button>
       </div>
       <button class="btn btn-quiet" id="resetBtn" type="button">Reset example</button>
       <button class="btn btn-primary" id="printBtn" type="button">
@@ -120,7 +118,7 @@
   <datalist id="chordSuggestions"></datalist>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="chords.js"></script>
-  <script src="app.js"></script>
+  <script src="chords.js?v=1.2.1"></script>
+  <script src="app.js?v=1.2.1"></script>
 </body>
 </html>

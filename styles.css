@@ -186,22 +186,16 @@ a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.toggle-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
+  margin: 0;
   padding: 0;
   border: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .toggle-track {
@@ -212,6 +206,7 @@ a:focus-visible {
   border: 1px solid rgba(117, 105, 87, 0.32);
   border-radius: 999px;
   background: #d9d0c1;
+  pointer-events: none;
   transition: background 160ms ease, border-color 160ms ease;
 }
 
@@ -224,21 +219,22 @@ a:focus-visible {
   border-radius: 50%;
   background: #fffdf8;
   box-shadow: 0 1px 3px rgba(43, 36, 27, 0.28);
+  pointer-events: none;
   transition: transform 160ms ease;
 }
 
-.toggle-input:checked + .toggle-track {
+.toggle[aria-checked="true"] .toggle-track {
   background: var(--accent);
   border-color: var(--accent-dark);
 }
 
-.toggle-input:checked + .toggle-track .toggle-thumb {
+.toggle[aria-checked="true"] .toggle-thumb {
   transform: translateX(18px);
 }
 
-.toggle-input:focus-visible + .toggle-track {
+.toggle:focus-visible {
   outline: 3px solid rgba(200, 75, 54, 0.35);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .toggle-label {
@@ -250,7 +246,7 @@ a:focus-visible {
   transition: color 160ms ease, opacity 160ms ease;
 }
 
-.toggle-input:not(:checked) + .toggle-track + .toggle-label {
+.toggle[aria-checked="false"] .toggle-label {
   color: var(--muted);
   opacity: 0.72;
 }
@@ -1078,7 +1074,7 @@ a:focus-visible {
     height: 14px;
   }
 
-  .toggle-input:checked + .toggle-track .toggle-thumb {
+  .toggle[aria-checked="true"] .toggle-thumb {
     transform: translateX(16px);
   }
 

@@ -10,7 +10,7 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2.1";
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -154,14 +154,16 @@
       persist();
     });
 
-    elements.guitarToggle.addEventListener("change", function (event) {
-      state.showGuitar = event.target.checked;
+    elements.guitarToggle.addEventListener("click", function () {
+      state.showGuitar = !state.showGuitar;
+      renderControls();
       renderChart();
       persist();
     });
 
-    elements.keyboardToggle.addEventListener("change", function (event) {
-      state.showKeyboard = event.target.checked;
+    elements.keyboardToggle.addEventListener("click", function () {
+      state.showKeyboard = !state.showKeyboard;
+      renderControls();
       renderChart();
       persist();
     });
@@ -325,8 +327,8 @@
     });
     elements.slotHint.textContent = state.columns + " slots per row";
     elements.addRowBtn.disabled = state.rows.length >= MAX_ROWS;
-    elements.guitarToggle.checked = state.showGuitar;
-    elements.keyboardToggle.checked = state.showKeyboard;
+    elements.guitarToggle.setAttribute("aria-checked", state.showGuitar ? "true" : "false");
+    elements.keyboardToggle.setAttribute("aria-checked", state.showKeyboard ? "true" : "false");
   }
 
   function renderEditor() {
