@@ -9,6 +9,8 @@
   const MM_TO_PX = 96 / 25.4;
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
+  const VERSION_META = document.querySelector('meta[name="app-version"]');
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2";
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -45,12 +47,23 @@
   init();
 
   function init() {
+    applyVersion();
     populateSuggestions();
     elements.titleInput.value = state.title;
     renderEditor();
     renderControls();
     renderChart();
     bindEvents();
+  }
+
+  /* Single source of truth for the release number: <meta name="app-version">. */
+  function applyVersion() {
+    const label = "Chord Sheet Studio v" + APP_VERSION;
+    document.title = label;
+    const badge = document.querySelector(".brand-version");
+    if (badge) badge.textContent = "v" + APP_VERSION;
+    const brand = document.querySelector(".brand");
+    if (brand) brand.setAttribute("aria-label", label + " home");
   }
 
   function makeRow(values) {
