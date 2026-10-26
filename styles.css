@@ -251,6 +251,36 @@ a:focus-visible {
   opacity: 0.72;
 }
 
+/* Compatibility for browsers still holding a pre-1.2.1 cached page, whose
+   switch markup is a visually hidden checkbox. Harmless with the current
+   role="switch" buttons. */
+.toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.toggle-input:checked + .toggle-track {
+  background: var(--accent);
+  border-color: var(--accent-dark);
+}
+
+.toggle-input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(18px);
+}
+
+.toggle-input:not(:checked) + .toggle-track + .toggle-label {
+  color: var(--muted);
+  opacity: 0.72;
+}
+
 .btn {
   border: 1px solid transparent;
   border-radius: 999px;
@@ -1075,6 +1105,10 @@ a:focus-visible {
   }
 
   .toggle[aria-checked="true"] .toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  .toggle-input:checked + .toggle-track .toggle-thumb {
     transform: translateX(16px);
   }
 

@@ -10,7 +10,7 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2.1";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2.2";
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",

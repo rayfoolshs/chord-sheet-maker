@@ -11,6 +11,15 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.2.2] - 2026-10-26
+
+### Fixed
+
+- Added CSS compatibility for browsers still holding a cached pre-1.2.1 page:
+  its hidden-checkbox switch is hidden again and still slides, instead of
+  showing up as a raw browser checkbox when the new stylesheet loads against
+  the old markup.
+
 ## [1.2.1] - 2026-10-26
 
 ### Fixed
