@@ -6,11 +6,16 @@
   const MAX_COLUMNS = 8;
   const MAX_ROWS = 12;
   const DIAGRAMS_PER_ROW = 5;
+  const MM_TO_PX = 96 / 25.4;
+  /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
+  const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
     columns: 4,
     hand: "right",
+    showGuitar: true,
+    showKeyboard: true,
     rows: [
       makeRow(["G", "G", "C", "C"]),
       makeRow(["Em", "Em", "C", "C"])
@@ -21,6 +26,8 @@
     titleInput: document.getElementById("titleInput"),
     columnControl: document.getElementById("columnControl"),
     handControl: document.getElementById("handControl"),
+    guitarToggle: document.getElementById("guitarToggle"),
+    keyboardToggle: document.getElementById("keyboardToggle"),
     progressionEditor: document.getElementById("progressionEditor"),
     slotHint: document.getElementById("slotHint"),
     addRowBtn: document.getElementById("addRowBtn"),
@@ -59,6 +66,8 @@
       title: DEFAULT_STATE.title,
       columns: DEFAULT_STATE.columns,
       hand: DEFAULT_STATE.hand,
+      showGuitar: DEFAULT_STATE.showGuitar,
+      showKeyboard: DEFAULT_STATE.showKeyboard,
       rows: DEFAULT_STATE.rows.map(function (row) { return row.slice(); })
     };
   }
@@ -76,6 +85,8 @@
         title: typeof saved.title === "string" ? saved.title : DEFAULT_STATE.title,
         columns: columns,
         hand: saved.hand === "left" ? "left" : "right",
+        showGuitar: saved.showGuitar !== false,
+        showKeyboard: saved.showKeyboard !== false,
         rows: rows
       };
     } catch (error) {
@@ -126,6 +137,18 @@
       if (!button) return;
       state.hand = button.dataset.hand === "left" ? "left" : "right";
       renderControls();
+      renderChart();
+      persist();
+    });
+
+    elements.guitarToggle.addEventListener("change", function (event) {
+      state.showGuitar = event.target.checked;
+      renderChart();
+      persist();
+    });
+
+    elements.keyboardToggle.addEventListener("change", function (event) {
+      state.showKeyboard = event.target.checked;
       renderChart();
       persist();
     });
@@ -231,8 +254,11 @@
     });
 
     elements.printBtn.addEventListener("click", function () {
+      preparePrintFit();
       window.print();
     });
+
+    window.addEventListener("beforeprint", preparePrintFit);
 
     elements.resetBtn.addEventListener("click", function () {
       if (!window.confirm("Reset the sheet to the example progression?")) return;
@@ -286,6 +312,8 @@
     });
     elements.slotHint.textContent = state.columns + " slots per row";
     elements.addRowBtn.disabled = state.rows.length >= MAX_ROWS;
+    elements.guitarToggle.checked = state.showGuitar;
+    elements.keyboardToggle.checked = state.showKeyboard;
   }
 
   function renderEditor() {
@@ -364,41 +392,84 @@
       "</footer>";
 
     if (!uniqueChords.length) {
+      const shown = [];
+      if (state.showGuitar) shown.push("guitar");
+      if (state.showKeyboard) shown.push("keyboard");
+      const message = shown.length
+        ? "Add a chord or two to the progression above to create " + shown.join(" and ") + " diagrams."
+        : "Add a chord or two to the progression above to build the chord progression table.";
       elements.paper.innerHTML =
-        titleMarkup +
-        '<div class="empty-sheet">' +
-          '<span class="empty-chord" aria-hidden="true">G</span>' +
-          "<h2>Your chart will appear here</h2>" +
-          "<p>Add a chord or two to the progression above to create guitar and keyboard diagrams.</p>" +
+        '<div class="sheet-body">' +
+          titleMarkup +
+          '<div class="empty-sheet">' +
+            '<span class="empty-chord" aria-hidden="true">G</span>' +
+            "<h2>Your chart will appear here</h2>" +
+            "<p>" + message + "</p>" +
+          "</div>" +
         "</div>" +
         footerMarkup;
+      preparePrintFit();
       return;
     }
 
-    const guitarGrid = diagramGrid(uniqueChords, "guitar");
-    const pianoGrid = diagramGrid(uniqueChords, "piano");
-
     const progressionSection = renderProgression(trimmedRows);
 
-    elements.paper.innerHTML =
-      titleMarkup +
+    const guitarSection =
       '<section class="diagram-section" aria-labelledby="guitarHeading">' +
         '<div class="section-heading">' +
           '<h2 id="guitarHeading">Guitar</h2>' +
           '<span>Fretting fingers in dots · notes include enharmonic names</span>' +
         "</div>" +
-        guitarGrid +
-      "</section>" +
-      '<div class="sheet-rule" aria-hidden="true"></div>' +
+        diagramGrid(uniqueChords, "guitar") +
+      "</section>";
+
+    const keyboardSection =
       '<section class="diagram-section" aria-labelledby="keyboardHeading">' +
         '<div class="section-heading">' +
           '<h2 id="keyboardHeading">Keyboard</h2>' +
           '<span>Numbers show suggested ' + handName + " fingering · notes include enharmonic names</span>" +
         "</div>" +
-        pianoGrid +
-      "</section>" +
-      progressionSection +
+        diagramGrid(uniqueChords, "piano") +
+      "</section>";
+
+    const sections = [];
+    if (state.showGuitar) sections.push(guitarSection);
+    if (state.showKeyboard) sections.push(keyboardSection);
+
+    elements.paper.innerHTML =
+      '<div class="sheet-body">' +
+        titleMarkup +
+        sections.join('<div class="sheet-rule" aria-hidden="true"></div>') +
+        progressionSection +
+      "</div>" +
       footerMarkup;
+
+    preparePrintFit();
+  }
+
+  /* Measure the sheet and shrink it (uniformly) so printing always lands on one A4 page. */
+  function preparePrintFit() {
+    const sheetBody = elements.paper.querySelector(".sheet-body");
+    if (!sheetBody) {
+      elements.paper.style.removeProperty("--print-zoom");
+      return;
+    }
+
+    document.body.classList.add("is-fitting");
+    const measured = sheetBody.scrollHeight;
+    const footer = elements.paper.querySelector(".sheet-footer");
+    const footerHeight = footer ? footer.offsetHeight : 0;
+    document.body.classList.remove("is-fitting");
+
+    if (!measured) {
+      elements.paper.style.setProperty("--print-zoom", "1");
+      return;
+    }
+
+    /* Printed sheet is 295mm tall with 12mm padding on each side; the footer sits at the bottom. */
+    const available = PRINT_SHEET_HEIGHT_PX - 2 * (12 * MM_TO_PX) - footerHeight - 3 * MM_TO_PX;
+    const zoom = clamp(available / measured, 0.25, 1);
+    elements.paper.style.setProperty("--print-zoom", zoom.toFixed(3));
   }
 
   function renderProgression(rows) {
@@ -427,11 +498,20 @@
     );
   }
 
+  /* Keep big progressions to fewer diagram rows so they still print legibly on one page. */
+  function diagramsPerRow(count) {
+    if (count <= 20) return DIAGRAMS_PER_ROW;
+    if (count <= 32) return 6;
+    if (count <= 45) return 7;
+    return 8;
+  }
+
   function diagramGrid(items, type) {
-    const columns = Math.min(DIAGRAMS_PER_ROW, items.length) || 1;
+    const perRow = diagramsPerRow(items.length);
+    const columns = Math.min(perRow, items.length) || 1;
     const chunks = [];
-    for (let index = 0; index < items.length; index += DIAGRAMS_PER_ROW) {
-      chunks.push(items.slice(index, index + DIAGRAMS_PER_ROW));
+    for (let index = 0; index < items.length; index += perRow) {
+      chunks.push(items.slice(index, index + perRow));
     }
     return chunks.map(function (chunk) {
       const cells = chunk.map(function (item) {

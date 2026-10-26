@@ -168,6 +168,91 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: 9px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.display-toggles {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 13px;
+  border: 1px solid rgba(117, 105, 87, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.5);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.toggle-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 22px;
+  border: 1px solid rgba(117, 105, 87, 0.32);
+  border-radius: 999px;
+  background: #d9d0c1;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow: 0 1px 3px rgba(43, 36, 27, 0.28);
+  transition: transform 160ms ease;
+}
+
+.toggle-input:checked + .toggle-track {
+  background: var(--accent);
+  border-color: var(--accent-dark);
+}
+
+.toggle-input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(18px);
+}
+
+.toggle-input:focus-visible + .toggle-track {
+  outline: 3px solid rgba(200, 75, 54, 0.35);
+  outline-offset: 2px;
+}
+
+.toggle-label {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.toggle-input:not(:checked) + .toggle-track + .toggle-label {
+  color: var(--muted);
+  opacity: 0.72;
 }
 
 .btn {
@@ -970,6 +1055,37 @@ a:focus-visible {
     font-size: 10.5px;
   }
 
+  .header-actions {
+    gap: 6px;
+  }
+
+  .display-toggles {
+    gap: 10px;
+    padding: 4px 10px;
+  }
+
+  .toggle {
+    gap: 6px;
+  }
+
+  .toggle-track {
+    width: 36px;
+    height: 20px;
+  }
+
+  .toggle-thumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  .toggle-input:checked + .toggle-track .toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  .toggle-label {
+    font-size: 9px;
+  }
+
   .app-main {
     width: min(100% - 24px, 1320px);
     padding-bottom: 40px;
@@ -1069,11 +1185,38 @@ a:focus-visible {
 
 @page {
   size: A4 portrait;
-  margin: 12mm;
+  margin: 0;
+}
+
+/* Used only while measuring, so the preview matches the printed A4 sheet. */
+body.is-fitting .paper {
+  width: 210mm !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12mm !important;
+}
+
+body.is-fitting .sheet-body {
+  width: 100% !important;
+  transform: none !important;
+}
+
+body.is-fitting .sheet-footer {
+  padding-top: 0 !important;
+  font-size: 8pt !important;
+}
+
+body.is-fitting .preview-section {
+  margin-top: 0 !important;
 }
 
 @media print {
+  html,
   body {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
     background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -1087,7 +1230,7 @@ a:focus-visible {
   }
 
   .app-main {
-    width: 100%;
+    width: 210mm;
     margin: 0;
     padding: 0;
   }
@@ -1097,13 +1240,28 @@ a:focus-visible {
   }
 
   .paper {
+    position: relative;
     max-width: none;
-    width: 100%;
-    min-height: 270mm;
-    padding: 0;
+    width: 210mm;
+    /* Two millimetres under A4 so a rounding error can never spill a blank page. */
+    height: 295mm;
+    min-height: 0;
+    margin: 0;
+    padding: 12mm;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    overflow: hidden;
+  }
+
+  .sheet-body {
+    /* --print-zoom is measured before printing so the whole sheet stays on one page. */
+    position: absolute;
+    top: 12mm;
+    left: 12mm;
+    right: 12mm;
+    transform: scale(var(--print-zoom, 1));
+    transform-origin: top center;
   }
 
   .sheet-title {
@@ -1167,7 +1325,12 @@ a:focus-visible {
   }
 
   .sheet-footer {
-    padding-top: 7mm;
+    position: absolute;
+    left: 12mm;
+    right: 12mm;
+    bottom: 12mm;
+    margin: 0;
+    padding-top: 0;
     font-size: 8pt;
   }
 }
