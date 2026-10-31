@@ -11,6 +11,22 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.3.1] - 2026-10-31
+
+### Fixed
+
+- Print / Save PDF now actually prints from an iPad Home Screen app instead of
+  just explaining the limitation. The button rasterises the sheet and builds a
+  one-page A4 PDF in the browser, then opens the iOS share sheet so you can
+  choose **Print** or **Save to Files**. If sharing is unavailable it opens or
+  downloads the PDF instead.
+- The help dialog remains as a fallback with Open in Safari / Copy link if PDF
+  generation or sharing fails.
+
+### Added
+
+- Vendored `html2canvas` 1.4.1 (MIT) for rendering the sheet to a PDF.
+
 ## [1.3.0] - 2026-10-31
 
 ### Fixed

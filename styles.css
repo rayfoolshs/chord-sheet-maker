@@ -306,6 +306,12 @@ a:focus-visible {
   transform: translateY(0);
 }
 
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.6;
+  transform: none;
+}
+
 .btn svg {
   width: 16px;
   height: 16px;
@@ -1100,6 +1106,15 @@ a:focus-visible {
 .print-help-steps strong {
   color: var(--ink);
   font-weight: 650;
+}
+
+.print-help-url:empty {
+  display: none;
+}
+
+.print-help-steps[hidden],
+.print-help-actions .btn[hidden] {
+  display: none !important;
 }
 
 .print-help-url {

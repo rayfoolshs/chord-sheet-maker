@@ -10,6 +10,7 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 - `chords.js` — music theory engine exposed as `window.ChordKit` (also UMD/CommonJS-compatible)
 - `app.js` — UI state, rendering, persistence, event handling
 - `styles.css` — warm paper aesthetic plus print styles
+- `html2canvas.min.js` — vendored html2canvas 1.4.1 (MIT), used only to build the iPad PDF
 
 ## Music engine (`chords.js`)
 
@@ -50,9 +51,10 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 ## Printing behavior
 
 - The **Print / Save PDF** action calls `window.print()` in normal browser tabs after fitting the sheet to one page.
-- Detect iOS/iPadOS running as a standalone (Home Screen) app, where the system provides no print dialog and `window.print()` is a silent no-op. In that case show an accessible dialog explaining the limitation with actions to open the page in Safari, copy the link, or try printing anyway, instead of failing silently.
-- Never leave the button unresponsive: if printing is unavailable or throws, surface a clear message.
+- Detect iOS/iPadOS running as a standalone (Home Screen) app, where the system provides no print dialog and `window.print()` is a silent no-op. There, rasterise the A4 sheet with the vendored `html2canvas` (1.4.1, MIT), wrap the image in a one-page A4 PDF built in the browser, and open the system share sheet (`navigator.share` with a file) so the user can choose Print or Save to Files.
+- If file sharing is unavailable, open or download the PDF instead. Keep an accessible fallback dialog that explains the limitation and offers Open in Safari and Copy link.
+- Never leave the button unresponsive: if printing, PDF generation, or sharing fails, surface a clear message.
 
 ## Quality bar
 
-Accessible labels/ARIA on controls and SVGs, keyboard navigation, XSS-safe HTML escaping, no external assets or libraries, and no console errors.
+Accessible labels/ARIA on controls and SVGs, keyboard navigation, XSS-safe HTML escaping, no external network assets (only the vendored `html2canvas` library for iPad PDF output), and no console errors.

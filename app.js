@@ -10,10 +10,12 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.0";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.1";
   const STANDALONE_QUERY = window.matchMedia
     ? window.matchMedia("(display-mode: standalone)")
     : null;
+  let pendingPdf = null;
+  let pendingPdfName = "chord-sheet.pdf";
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -42,10 +44,13 @@
     suggestions: document.getElementById("chordSuggestions"),
     toast: document.getElementById("toast"),
     printHelp: document.getElementById("printHelp"),
+    printHelpTitle: document.getElementById("printHelpTitle"),
+    printHelpBody: document.getElementById("printHelpBody"),
+    printHelpSteps: document.getElementById("printHelpSteps"),
     printHelpUrl: document.getElementById("printHelpUrl"),
+    printHelpShare: document.getElementById("printHelpShare"),
     printHelpSafari: document.getElementById("printHelpSafari"),
     printHelpCopy: document.getElementById("printHelpCopy"),
-    printHelpTry: document.getElementById("printHelpTry"),
     printHelpClose: document.getElementById("printHelpClose")
   };
 
@@ -287,10 +292,9 @@
     if (elements.printHelpClose) elements.printHelpClose.addEventListener("click", hidePrintHelp);
     if (elements.printHelpSafari) elements.printHelpSafari.addEventListener("click", openInSafari);
     if (elements.printHelpCopy) elements.printHelpCopy.addEventListener("click", copyPrintLink);
-    if (elements.printHelpTry) {
-      elements.printHelpTry.addEventListener("click", function () {
-        hidePrintHelp();
-        performPrint();
+    if (elements.printHelpShare) {
+      elements.printHelpShare.addEventListener("click", function () {
+        sharePendingPdf(true);
       });
     }
 
@@ -489,7 +493,7 @@
     preparePrintFit();
   }
 
-  /* iPadOS gives Home Screen web apps no print dialog, so route those users to Safari. */
+  /* iPadOS gives Home Screen web apps no print dialog, so build a PDF and share that instead. */
   function isIOS() {
     const ua = window.navigator.userAgent || "";
     if (/iPad|iPhone|iPod/.test(ua)) return true;
@@ -504,7 +508,7 @@
   function requestPrint() {
     preparePrintFit();
     if (isIOS() && isStandaloneApp()) {
-      showPrintHelp();
+      printAsPdf();
       return;
     }
     performPrint();
@@ -519,19 +523,117 @@
       window.print();
     } catch (error) {
       if (isIOS()) {
-        showPrintHelp();
+        printAsPdf();
       } else {
         showToast("Printing is unavailable in this browser");
       }
     }
   }
 
+  /* Render the A4 sheet to an image, wrap it in a one-page PDF, and hand it to the share sheet. */
+  function printAsPdf() {
+    if (!window.html2canvas || !elements.paper) {
+      showPrintHelp();
+      return;
+    }
+    elements.printBtn.disabled = true;
+    showToast("Preparing printable PDF…");
+    window.html2canvas(elements.paper, {
+      backgroundColor: "#fffdf8",
+      scale: 2,
+      useCORS: true,
+      logging: false
+    }).then(function (canvas) {
+      const jpeg = base64ToBytes(canvas.toDataURL("image/jpeg", 0.92).split(",")[1]);
+      pendingPdf = buildA4Pdf(jpeg, canvas.width, canvas.height);
+      pendingPdfName = pdfFileName();
+      showPrintReady();
+      return sharePendingPdf(false);
+    }).catch(function () {
+      showPrintHelp();
+    }).then(function () {
+      elements.printBtn.disabled = false;
+    }, function () {
+      elements.printBtn.disabled = false;
+    });
+  }
+
+  function pdfFileName() {
+    const title = (state.title || "chord-sheet").trim().replace(/[^\w\- ]+/g, "").replace(/\s+/g, "-");
+    return (title || "chord-sheet") + ".pdf";
+  }
+
+  function pdfShareData() {
+    if (!pendingPdf) return null;
+    const file = new File([pendingPdf], pendingPdfName, { type: "application/pdf" });
+    return { files: [file], title: (state.title || "Chord sheet").trim() || "Chord sheet" };
+  }
+
+  function sharePendingPdf(manual) {
+    const data = pdfShareData();
+    if (!data) {
+      showPrintHelp();
+      return Promise.resolve();
+    }
+    const share = window.navigator.share;
+    const canShare = window.navigator.canShare;
+    if (typeof share !== "function" || (typeof canShare === "function" && !canShare(data))) {
+      if (manual) openPdfFallback();
+      return Promise.resolve();
+    }
+    return share.call(window.navigator, data).then(function () {
+      hidePrintHelp();
+    }, function (error) {
+      if (error && error.name === "AbortError") return;
+      if (manual) openPdfFallback();
+    });
+  }
+
+  function openPdfFallback() {
+    if (!pendingPdf) return;
+    const url = URL.createObjectURL(pendingPdf);
+    const opened = window.open(url, "_blank");
+    if (!opened) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = pendingPdfName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+    showToast("PDF opened — use Share to print it");
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+
+  function showPrintReady() {
+    if (!elements.printHelp) return;
+    elements.printHelpTitle.textContent = "Your printable PDF is ready";
+    elements.printHelpBody.textContent =
+      "Tap Share / Print PDF, then choose Print or Save to Files. You can also send it to another app.";
+    if (elements.printHelpSteps) elements.printHelpSteps.hidden = false;
+    if (elements.printHelpShare) elements.printHelpShare.hidden = false;
+    openPrintDialog();
+  }
+
   function showPrintHelp() {
     if (!elements.printHelp) return;
+    elements.printHelpTitle.textContent = "Print from a Safari tab";
+    elements.printHelpBody.textContent =
+      "iPadOS does not let a Home Screen app open the print dialog. Open the sheet in Safari and print from there.";
+    if (elements.printHelpSteps) elements.printHelpSteps.hidden = false;
+    if (elements.printHelpShare) elements.printHelpShare.hidden = true;
+    openPrintDialog();
+  }
+
+  function openPrintDialog() {
     elements.printHelpUrl.textContent = window.location.href;
     elements.printHelp.hidden = false;
     document.body.classList.add("print-help-open");
-    if (elements.printHelpSafari) elements.printHelpSafari.focus();
+    if (elements.printHelpShare && !elements.printHelpShare.hidden) {
+      elements.printHelpShare.focus();
+    } else if (elements.printHelpSafari) {
+      elements.printHelpSafari.focus();
+    }
   }
 
   function hidePrintHelp() {
@@ -563,6 +665,75 @@
       return;
     }
     showToast("Copy the link shown in the dialog");
+  }
+
+  function base64ToBytes(base64) {
+    const binary = window.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes;
+  }
+
+  /* Minimal single-image A4 PDF: the rasterised sheet is the whole page. */
+  function buildA4Pdf(jpeg, imageWidth, imageHeight) {
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+    const scale = Math.min(pageWidth / imageWidth, pageHeight / imageHeight);
+    const drawWidth = imageWidth * scale;
+    const drawHeight = imageHeight * scale;
+    const drawX = (pageWidth - drawWidth) / 2;
+    const drawY = (pageHeight - drawHeight) / 2;
+
+    const encoder = new TextEncoder();
+    const chunks = [];
+    const offsets = [];
+    let offset = 0;
+
+    function push(value) {
+      const bytes = typeof value === "string" ? encoder.encode(value) : value;
+      chunks.push(bytes);
+      offset += bytes.length;
+    }
+
+    function beginObject(index) {
+      offsets[index] = offset;
+      push(index + " 0 obj\n");
+    }
+
+    push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+
+    beginObject(1);
+    push("<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+    beginObject(2);
+    push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+
+    beginObject(3);
+    push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidth + " " + pageHeight +
+      "] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n");
+
+    beginObject(4);
+    push("<< /Type /XObject /Subtype /Image /Width " + imageWidth + " /Height " + imageHeight +
+      " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " +
+      jpeg.length + " >>\nstream\n");
+    push(jpeg);
+    push("\nendstream\nendobj\n");
+
+    const content = "q\n" + drawWidth.toFixed(2) + " 0 0 " + drawHeight.toFixed(2) + " " +
+      drawX.toFixed(2) + " " + drawY.toFixed(2) + " cm\n/Im0 Do\nQ\n";
+    beginObject(5);
+    push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream\nendobj\n");
+
+    const xrefStart = offset;
+    push("xref\n0 6\n0000000000 65535 f \n");
+    for (let index = 1; index <= 5; index += 1) {
+      push(String(offsets[index]).padStart(10, "0") + " 00000 n \n");
+    }
+    push("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xrefStart + "\n%%EOF\n");
+
+    return new Blob(chunks, { type: "application/pdf" });
   }
 
   /* Measure the sheet and shrink it (uniformly) so printing always lands on one A4 page. */
