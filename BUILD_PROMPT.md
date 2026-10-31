@@ -47,6 +47,12 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 - Responsive layout: 3-column field grid → 2 → 1; scrollable progression editor; fluid diagram sizing via container queries (`cqw`) and CSS variables (`--cols`).
 - Full `@media print` support for A4 portrait 12mm margins: hide header/editor, remove paper shadow/rounding, use point-based sizing, and avoid breaking cards/sections across pages. Honor `prefers-reduced-motion`.
 
+## Printing behavior
+
+- The **Print / Save PDF** action calls `window.print()` in normal browser tabs after fitting the sheet to one page.
+- Detect iOS/iPadOS running as a standalone (Home Screen) app, where the system provides no print dialog and `window.print()` is a silent no-op. In that case show an accessible dialog explaining the limitation with actions to open the page in Safari, copy the link, or try printing anyway, instead of failing silently.
+- Never leave the button unresponsive: if printing is unavailable or throws, surface a clear message.
+
 ## Quality bar
 
 Accessible labels/ARIA on controls and SVGs, keyboard navigation, XSS-safe HTML escaping, no external assets or libraries, and no console errors.

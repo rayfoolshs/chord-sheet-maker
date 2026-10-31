@@ -40,6 +40,13 @@ Root `[A–G]` with `#`, `b`, `♯`, `♭`, optional slash bass, and the qualiti
 
 Everything is stored in the browser, so a refresh keeps your work.
 
+### Printing on an iPad
+
+Print from a **Safari tab**. If the app is added to the Home Screen, iPadOS runs it as a
+standalone web app and does not provide a print dialog — the app detects this and offers to
+open the sheet in Safari (or copy the link there). Open it in Safari, tap Share, then Print
+or Save to Files for a PDF.
+
 ## Files
 
 | File | Role |
@@ -49,7 +56,7 @@ Everything is stored in the browser, so a refresh keeps your work.
 | `app.js` | UI state, rendering, persistence |
 | `styles.css` | Paper aesthetic plus print stylesheet |
 | `BUILD_PROMPT.md` | The specification the app was built from |
-| `CHANGELOG.md` | Version history (current: v1.2.2) |
+| `CHANGELOG.md` | Version history (current: v1.3.0) |
 
 ## Run it
 

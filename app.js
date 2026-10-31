@@ -10,7 +10,10 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.2.2";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.0";
+  const STANDALONE_QUERY = window.matchMedia
+    ? window.matchMedia("(display-mode: standalone)")
+    : null;
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -37,7 +40,13 @@
     resetBtn: document.getElementById("resetBtn"),
     paper: document.getElementById("paper"),
     suggestions: document.getElementById("chordSuggestions"),
-    toast: document.getElementById("toast")
+    toast: document.getElementById("toast"),
+    printHelp: document.getElementById("printHelp"),
+    printHelpUrl: document.getElementById("printHelpUrl"),
+    printHelpSafari: document.getElementById("printHelpSafari"),
+    printHelpCopy: document.getElementById("printHelpCopy"),
+    printHelpTry: document.getElementById("printHelpTry"),
+    printHelpClose: document.getElementById("printHelpClose")
   };
 
   let state = loadState();
@@ -268,9 +277,27 @@
       if (input) input.focus();
     });
 
-    elements.printBtn.addEventListener("click", function () {
-      preparePrintFit();
-      window.print();
+    elements.printBtn.addEventListener("click", requestPrint);
+
+    if (elements.printHelp) {
+      elements.printHelp.addEventListener("click", function (event) {
+        if (event.target.closest("[data-print-help-dismiss]")) hidePrintHelp();
+      });
+    }
+    if (elements.printHelpClose) elements.printHelpClose.addEventListener("click", hidePrintHelp);
+    if (elements.printHelpSafari) elements.printHelpSafari.addEventListener("click", openInSafari);
+    if (elements.printHelpCopy) elements.printHelpCopy.addEventListener("click", copyPrintLink);
+    if (elements.printHelpTry) {
+      elements.printHelpTry.addEventListener("click", function () {
+        hidePrintHelp();
+        performPrint();
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && elements.printHelp && !elements.printHelp.hidden) {
+        hidePrintHelp();
+      }
     });
 
     window.addEventListener("beforeprint", preparePrintFit);
@@ -460,6 +487,82 @@
       footerMarkup;
 
     preparePrintFit();
+  }
+
+  /* iPadOS gives Home Screen web apps no print dialog, so route those users to Safari. */
+  function isIOS() {
+    const ua = window.navigator.userAgent || "";
+    if (/iPad|iPhone|iPod/.test(ua)) return true;
+    return window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
+  }
+
+  function isStandaloneApp() {
+    if (window.navigator.standalone === true) return true;
+    return Boolean(STANDALONE_QUERY && STANDALONE_QUERY.matches);
+  }
+
+  function requestPrint() {
+    preparePrintFit();
+    if (isIOS() && isStandaloneApp()) {
+      showPrintHelp();
+      return;
+    }
+    performPrint();
+  }
+
+  function performPrint() {
+    if (typeof window.print !== "function") {
+      showToast("This browser cannot open the print dialog");
+      return;
+    }
+    try {
+      window.print();
+    } catch (error) {
+      if (isIOS()) {
+        showPrintHelp();
+      } else {
+        showToast("Printing is unavailable in this browser");
+      }
+    }
+  }
+
+  function showPrintHelp() {
+    if (!elements.printHelp) return;
+    elements.printHelpUrl.textContent = window.location.href;
+    elements.printHelp.hidden = false;
+    document.body.classList.add("print-help-open");
+    if (elements.printHelpSafari) elements.printHelpSafari.focus();
+  }
+
+  function hidePrintHelp() {
+    if (!elements.printHelp || elements.printHelp.hidden) return;
+    elements.printHelp.hidden = true;
+    document.body.classList.remove("print-help-open");
+    elements.printBtn.focus();
+  }
+
+  function openInSafari() {
+    const opened = window.open(window.location.href, "_blank");
+    if (!opened) {
+      copyPrintLink();
+      showToast("Link copied — paste it into Safari");
+      return;
+    }
+    hidePrintHelp();
+    showToast("If it did not open, copy the link into Safari");
+  }
+
+  function copyPrintLink() {
+    const url = window.location.href;
+    if (window.navigator.clipboard && window.navigator.clipboard.writeText) {
+      window.navigator.clipboard.writeText(url).then(function () {
+        showToast("Link copied");
+      }, function () {
+        showToast("Copy the link shown in the dialog");
+      });
+      return;
+    }
+    showToast("Copy the link shown in the dialog");
   }
 
   /* Measure the sheet and shrink it (uniformly) so printing always lands on one A4 page. */

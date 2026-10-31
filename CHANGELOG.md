@@ -11,6 +11,16 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.3.0] - 2026-10-31
+
+### Fixed
+
+- Print / Save PDF now explains itself on iPad when the app was added to the
+  Home Screen. iPadOS does not give standalone web apps a print dialog, so the
+  button previously did nothing; it now offers to open the sheet in a Safari
+  tab, copy the link, or try printing anyway. Printing is unchanged in normal
+  browser tabs.
+
 ## [1.2.2] - 2026-10-26
 
 ### Fixed
