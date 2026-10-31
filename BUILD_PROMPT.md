@@ -50,9 +50,10 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 
 ## Printing behavior
 
-- The **Print / Save PDF** action calls `window.print()` in normal browser tabs after fitting the sheet to one page.
-- Detect iOS/iPadOS running as a standalone (Home Screen) app, where the system provides no print dialog and `window.print()` is a silent no-op. There, rasterise the A4 sheet with the vendored `html2canvas` (1.4.1, MIT), wrap the image in a one-page A4 PDF built in the browser, and open the system share sheet (`navigator.share` with a file) so the user can choose Print or Save to Files.
-- If file sharing is unavailable, open or download the PDF instead. Keep an accessible fallback dialog that explains the limitation and offers Open in Safari and Copy link.
+- On desktop browsers, the **Print / Save PDF** action calls `window.print()` after fitting the sheet to one page.
+- On iOS/iPadOS — in both a Safari tab and a standalone (Home Screen) app — rasterise the A4 sheet with the vendored `html2canvas` (1.4.1, MIT), wrap the image in a one-page A4 PDF built in the browser, and show a preview with **Share / Print PDF** (opens the system share sheet via `navigator.share` with a file) and **Download PDF**.
+- Always give visible feedback: if sharing or `window.open` is unavailable, offer the download link and show messages above the dialog (not behind it).
+- Keep an accessible fallback dialog that explains the limitation and offers Open in Safari and Copy link if PDF generation fails.
 - Never leave the button unresponsive: if printing, PDF generation, or sharing fails, surface a clear message.
 
 ## Quality bar

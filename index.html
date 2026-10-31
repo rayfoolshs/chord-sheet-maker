@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f2ede4">
   <meta name="description" content="Turn a chord progression into a printable guitar and keyboard chord sheet with fingering.">
-  <meta name="app-version" content="1.3.1">
-  <title>Chord Sheet Studio v1.3.1</title>
-  <link rel="stylesheet" href="styles.css?v=1.3.1">
+  <meta name="app-version" content="1.3.2">
+  <title>Chord Sheet Studio v1.3.2</title>
+  <link rel="stylesheet" href="styles.css?v=1.3.2">
 </head>
 <body>
   <header class="app-header">
     <div class="brand-lockup">
-      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.3.1 home">
+      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.3.2 home">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 44 44" role="presentation">
             <rect x="2" y="2" width="40" height="40" rx="13"></rect>
@@ -21,7 +21,7 @@
           </svg>
         </span>
         <span class="brand-copy">
-          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.3.1</span></span>
+          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.3.2</span></span>
           <span class="brand-tagline">Guitar + keyboard charts, ready to print</span>
         </span>
       </a>
@@ -121,9 +121,10 @@
   <div class="print-help" id="printHelp" hidden>
     <div class="print-help-backdrop" data-print-help-dismiss aria-hidden="true"></div>
     <div class="print-help-card" role="dialog" aria-modal="true" aria-labelledby="printHelpTitle" aria-describedby="printHelpBody">
-      <p class="print-help-eyebrow">iPad · Home Screen app</p>
+      <p class="print-help-eyebrow">iPad · print via PDF</p>
       <h2 id="printHelpTitle">Print from a Safari tab</h2>
       <p id="printHelpBody">iPadOS does not let a Home Screen app open the print dialog. Open the sheet in Safari and print from there, or share the PDF this app can build for you.</p>
+      <img class="print-help-preview" id="printHelpPreview" alt="Preview of the printable chord sheet" hidden>
       <ol class="print-help-steps" id="printHelpSteps">
         <li>Open Chord Sheet Studio in a Safari tab — tap <strong>Open in Safari</strong>, or copy the link below and paste it into Safari.</li>
         <li>Tap the Share button, then choose <strong>Print</strong> (or <strong>Save to Files</strong> for a PDF).</li>
@@ -131,6 +132,7 @@
       <p class="print-help-url" id="printHelpUrl"></p>
       <div class="print-help-actions">
         <button class="btn btn-primary" id="printHelpShare" type="button" hidden>Share / Print PDF</button>
+        <a class="btn btn-quiet" id="printHelpDownload" role="button" download="chord-sheet.pdf" hidden>Download PDF</a>
         <button class="btn btn-primary" id="printHelpSafari" type="button">Open in Safari</button>
         <button class="btn btn-quiet" id="printHelpCopy" type="button">Copy link</button>
         <button class="btn btn-quiet" id="printHelpClose" type="button">Close</button>
@@ -138,8 +140,8 @@
     </div>
   </div>
 
-  <script src="html2canvas.min.js?v=1.3.1"></script>
-  <script src="chords.js?v=1.3.1"></script>
-  <script src="app.js?v=1.3.1"></script>
+  <script src="html2canvas.min.js?v=1.3.2"></script>
+  <script src="chords.js?v=1.3.2"></script>
+  <script src="app.js?v=1.3.2"></script>
 </body>
 </html>

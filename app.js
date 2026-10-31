@@ -10,12 +10,11 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.1";
-  const STANDALONE_QUERY = window.matchMedia
-    ? window.matchMedia("(display-mode: standalone)")
-    : null;
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.2";
   let pendingPdf = null;
   let pendingPdfName = "chord-sheet.pdf";
+  let pendingPdfUrl = null;
+  let pendingPreviewUrl = null;
 
   const DEFAULT_STATE = {
     title: "I Got A Feeling",
@@ -47,6 +46,8 @@
     printHelpTitle: document.getElementById("printHelpTitle"),
     printHelpBody: document.getElementById("printHelpBody"),
     printHelpSteps: document.getElementById("printHelpSteps"),
+    printHelpPreview: document.getElementById("printHelpPreview"),
+    printHelpDownload: document.getElementById("printHelpDownload"),
     printHelpUrl: document.getElementById("printHelpUrl"),
     printHelpShare: document.getElementById("printHelpShare"),
     printHelpSafari: document.getElementById("printHelpSafari"),
@@ -500,14 +501,9 @@
     return window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
   }
 
-  function isStandaloneApp() {
-    if (window.navigator.standalone === true) return true;
-    return Boolean(STANDALONE_QUERY && STANDALONE_QUERY.matches);
-  }
-
   function requestPrint() {
     preparePrintFit();
-    if (isIOS() && isStandaloneApp()) {
+    if (isIOS()) {
       printAsPdf();
       return;
     }
@@ -533,7 +529,7 @@
   /* Render the A4 sheet to an image, wrap it in a one-page PDF, and hand it to the share sheet. */
   function printAsPdf() {
     if (!window.html2canvas || !elements.paper) {
-      showPrintHelp();
+      showPrintHelp("The PDF builder did not load.");
       return;
     }
     elements.printBtn.disabled = true;
@@ -544,13 +540,20 @@
       useCORS: true,
       logging: false
     }).then(function (canvas) {
-      const jpeg = base64ToBytes(canvas.toDataURL("image/jpeg", 0.92).split(",")[1]);
+      const preview = canvas.toDataURL("image/jpeg", 0.92);
+      const jpeg = base64ToBytes(preview.split(",")[1]);
+      if (pendingPdfUrl) {
+        URL.revokeObjectURL(pendingPdfUrl);
+        pendingPdfUrl = null;
+      }
       pendingPdf = buildA4Pdf(jpeg, canvas.width, canvas.height);
       pendingPdfName = pdfFileName();
+      pendingPreviewUrl = preview;
+      pendingPdfUrl = URL.createObjectURL(pendingPdf);
       showPrintReady();
       return sharePendingPdf(false);
     }).catch(function () {
-      showPrintHelp();
+      showPrintHelp("Something went wrong while building the PDF.");
     }).then(function () {
       elements.printBtn.disabled = false;
     }, function () {
@@ -572,16 +575,21 @@
   function sharePendingPdf(manual) {
     const data = pdfShareData();
     if (!data) {
-      showPrintHelp();
+      showPrintHelp("The PDF is not ready yet.");
       return Promise.resolve();
     }
-    const share = window.navigator.share;
-    const canShare = window.navigator.canShare;
-    if (typeof share !== "function" || (typeof canShare === "function" && !canShare(data))) {
+    if (!canShareFiles(data)) {
       if (manual) openPdfFallback();
       return Promise.resolve();
     }
-    return share.call(window.navigator, data).then(function () {
+    let shared;
+    try {
+      shared = window.navigator.share(data);
+    } catch (error) {
+      if (manual) openPdfFallback();
+      return Promise.resolve();
+    }
+    return Promise.resolve(shared).then(function () {
       hidePrintHelp();
     }, function (error) {
       if (error && error.name === "AbortError") return;
@@ -589,39 +597,62 @@
     });
   }
 
-  function openPdfFallback() {
-    if (!pendingPdf) return;
-    const url = URL.createObjectURL(pendingPdf);
-    const opened = window.open(url, "_blank");
-    if (!opened) {
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = pendingPdfName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  function canShareFiles(data) {
+    const share = window.navigator.share;
+    const canShare = window.navigator.canShare;
+    if (typeof share !== "function") return false;
+    if (typeof canShare !== "function") return true;
+    try {
+      return Boolean(canShare.call(window.navigator, data));
+    } catch (error) {
+      return false;
     }
-    showToast("PDF opened — use Share to print it");
-    window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+
+  function openPdfFallback() {
+    if (!pendingPdfUrl) {
+      showPrintHelp("The PDF is not ready yet.");
+      return;
+    }
+    const opened = window.open(pendingPdfUrl, "_blank");
+    if (!opened && elements.printHelpDownload) {
+      elements.printHelpDownload.click();
+    }
+    showToast("If the PDF did not open, tap Download PDF");
   }
 
   function showPrintReady() {
     if (!elements.printHelp) return;
     elements.printHelpTitle.textContent = "Your printable PDF is ready";
     elements.printHelpBody.textContent =
-      "Tap Share / Print PDF, then choose Print or Save to Files. You can also send it to another app.";
-    if (elements.printHelpSteps) elements.printHelpSteps.hidden = false;
+      "Tap Share / Print PDF, then choose Print or Save to Files. If nothing opens, press and hold the preview to save it to Photos, or tap Download PDF.";
+    if (elements.printHelpSteps) elements.printHelpSteps.hidden = true;
+    if (elements.printHelpPreview) {
+      elements.printHelpPreview.src = pendingPreviewUrl || "";
+      elements.printHelpPreview.hidden = !pendingPreviewUrl;
+    }
+    if (elements.printHelpDownload) {
+      elements.printHelpDownload.href = pendingPdfUrl || "#";
+      elements.printHelpDownload.download = pendingPdfName;
+      elements.printHelpDownload.hidden = !pendingPdfUrl;
+    }
     if (elements.printHelpShare) elements.printHelpShare.hidden = false;
+    if (elements.printHelpSafari) elements.printHelpSafari.hidden = true;
+    if (elements.printHelpUrl) elements.printHelpUrl.hidden = true;
     openPrintDialog();
   }
 
-  function showPrintHelp() {
+  function showPrintHelp(reason) {
     if (!elements.printHelp) return;
     elements.printHelpTitle.textContent = "Print from a Safari tab";
-    elements.printHelpBody.textContent =
+    elements.printHelpBody.textContent = reason ||
       "iPadOS does not let a Home Screen app open the print dialog. Open the sheet in Safari and print from there.";
     if (elements.printHelpSteps) elements.printHelpSteps.hidden = false;
+    if (elements.printHelpPreview) elements.printHelpPreview.hidden = true;
+    if (elements.printHelpDownload) elements.printHelpDownload.hidden = true;
     if (elements.printHelpShare) elements.printHelpShare.hidden = true;
+    if (elements.printHelpSafari) elements.printHelpSafari.hidden = false;
+    if (elements.printHelpUrl) elements.printHelpUrl.hidden = false;
     openPrintDialog();
   }
 

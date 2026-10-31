@@ -42,11 +42,11 @@ Everything is stored in the browser, so a refresh keeps your work.
 
 ### Printing on an iPad
 
-iPadOS does not give a Home Screen web app a print dialog, so the app builds a
-one-page A4 PDF of your sheet and hands it to the system share sheet — choose **Print** or
-**Save to Files**. If sharing is unavailable it opens or downloads the PDF instead, and the
-dialog still offers Open in Safari / Copy link as a fallback. On a computer or in a normal
-Safari tab, **Print / Save PDF** opens the usual print dialog directly.
+iPadOS does not reliably give web apps a print dialog, so on any iPad the app builds a
+one-page A4 PDF of your sheet and shows a preview with Share / Print PDF and Download PDF.
+Tap **Share / Print PDF** and choose **Print** or **Save to Files**; if the share sheet does
+not open, press and hold the preview to save it to Photos, or use **Download PDF**. On a
+computer, **Print / Save PDF** opens the usual print dialog directly.
 
 ## Files
 
@@ -58,7 +58,7 @@ Safari tab, **Print / Save PDF** opens the usual print dialog directly.
 | `styles.css` | Paper aesthetic plus print stylesheet |
 | `html2canvas.min.js` | Vendored html2canvas 1.4.1 (MIT) — rasterises the sheet for iPad PDF printing |
 | `BUILD_PROMPT.md` | The specification the app was built from |
-| `CHANGELOG.md` | Version history (current: v1.3.1) |
+| `CHANGELOG.md` | Version history (current: v1.3.2) |
 
 ## Run it
 

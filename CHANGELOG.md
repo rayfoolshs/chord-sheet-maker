@@ -11,6 +11,20 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.3.2] - 2026-10-31
+
+### Fixed
+
+- Every iPad session now prints through the PDF path, not just the Home Screen
+  app. Some iPadOS versions silently ignore `window.print()` in a Safari tab
+  too, so tapping Print could appear to do nothing.
+- The PDF result is now always visible: a preview of the generated page and a
+  Download PDF link appear in the dialog, so there is a reliable fallback if the
+  share sheet does not open.
+- Toasts (such as "Link copied" or "If the PDF did not open…") now render above
+  the dialog instead of behind it, which made some actions look like they did
+  nothing.
+
 ## [1.3.1] - 2026-10-31
 
 ### Fixed
