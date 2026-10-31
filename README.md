@@ -62,7 +62,7 @@ computer, **Print / Save PDF** opens the usual print dialog directly.
 
 ## Run it
 
-No build step, no dependencies:
+No build step, and no network dependencies (the one library, html2canvas, is vendored):
 
 ```bash
 open index.html          # macOS
