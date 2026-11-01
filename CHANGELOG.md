@@ -11,6 +11,15 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.4.1] - 2026-11-01
+
+### Fixed
+
+- The version fallback in `app.js` still said `1.3.2` if the
+  `<meta name="app-version">` tag was missing. It now matches the release.
+  No visible behaviour changes; the meta tag drives the title and badge as
+  before, and the asset query strings were bumped so cached copies refresh.
+
 ## [1.4.0] - 2026-11-01
 
 ### Added

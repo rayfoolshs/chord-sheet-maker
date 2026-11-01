@@ -10,7 +10,7 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.3.2";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.4.1";
   let pendingPdf = null;
   let pendingPdfName = "chord-sheet.pdf";
   let pendingPdfUrl = null;

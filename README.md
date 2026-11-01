@@ -67,7 +67,7 @@ computer, **Print / Save PDF** opens the usual print dialog directly.
 | `styles.css` | Paper aesthetic plus print stylesheet |
 | `html2canvas.min.js` | Vendored html2canvas 1.4.1 (MIT) — rasterises the sheet for iPad PDF printing |
 | `BUILD_PROMPT.md` | The specification the app was built from |
-| `CHANGELOG.md` | Version history (current: v1.4.0) |
+| `CHANGELOG.md` | Version history (current: v1.4.1) |
 | `UPDATES.md` | Running log of every addition, change and removal |
 | `AGENTS.md` | Maintenance rules, including keeping `UPDATES.md` current |
 

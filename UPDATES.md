@@ -10,6 +10,21 @@ nothing disappears silently.
 
 ---
 
+## 2026-11-01 — v1.4.1 (released, published to GitHub Pages)
+
+### Fixed
+
+- `app.js` had a stale `1.3.2` fallback for `APP_VERSION` (used only when the
+  version meta tag is missing). It now matches the release, and the `?v=` asset
+  query strings were bumped to 1.4.1 so browsers pick up the new script.
+- `index.html`, `README.md` and `CHANGELOG.md` carry the 1.4.1 version.
+
+### Removed
+
+- Nothing removed.
+
+---
+
 ## 2026-11-01 — v1.4.0 (released, published to GitHub Pages)
 
 ### Added
