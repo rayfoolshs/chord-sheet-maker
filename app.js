@@ -22,6 +22,7 @@
     hand: "right",
     showGuitar: true,
     showKeyboard: true,
+    voicings: {},
     rows: [
       makeRow(["G", "G", "C", "C"]),
       makeRow(["Em", "Em", "C", "C"])
@@ -96,6 +97,7 @@
       hand: DEFAULT_STATE.hand,
       showGuitar: DEFAULT_STATE.showGuitar,
       showKeyboard: DEFAULT_STATE.showKeyboard,
+      voicings: {},
       rows: DEFAULT_STATE.rows.map(function (row) { return row.slice(); })
     };
   }
@@ -115,11 +117,22 @@
         hand: saved.hand === "left" ? "left" : "right",
         showGuitar: saved.showGuitar !== false,
         showKeyboard: saved.showKeyboard !== false,
+        voicings: sanitizeVoicings(saved.voicings),
         rows: rows
       };
     } catch (error) {
       return cloneDefault();
     }
+  }
+
+  /* Voicing choices are keyed by chord identity, so they survive re-renders and reloads. */
+  function sanitizeVoicings(value) {
+    const voicings = {};
+    if (!value || typeof value !== "object") return voicings;
+    Object.keys(value).forEach(function (key) {
+      if (typeof value[key] === "string" && value[key]) voicings[key] = value[key];
+    });
+    return voicings;
   }
 
   function persist() {
@@ -200,7 +213,10 @@
       const column = Number(input.dataset.col);
       const value = input.value.trim();
       const chord = CK.parseChord(value);
-      if (chord) {
+      if (CK.isNoChord(value)) {
+        input.value = "NC";
+        state.rows[row][column] = "NC";
+      } else if (chord) {
         input.value = chord.ascii;
         state.rows[row][column] = chord.ascii;
       } else {
@@ -285,6 +301,12 @@
 
     elements.printBtn.addEventListener("click", requestPrint);
 
+    elements.paper.addEventListener("change", function (event) {
+      const select = event.target.closest(".voicing-select");
+      if (!select) return;
+      setVoicing(select.dataset.chord, select.value);
+    });
+
     if (elements.printHelp) {
       elements.printHelp.addEventListener("click", function (event) {
         if (event.target.closest("[data-print-help-dismiss]")) hidePrintHelp();
@@ -337,7 +359,7 @@
 
   function validateInput(input) {
     const value = input.value.trim();
-    const valid = !value || Boolean(CK.parseChord(value));
+    const valid = !value || CK.isNoChord(value) || Boolean(CK.parseChord(value));
     input.classList.toggle("is-invalid", !valid);
     if (valid) {
       input.removeAttribute("title");
@@ -403,6 +425,11 @@
     });
   }
 
+  function chordIdentity(chord) {
+    return chord.rootPc + "|" + chord.qualityKey + "|" +
+      (chord.bassPc === null ? "" : chord.bassPc);
+  }
+
   function renderChart() {
     const visibleRows = state.rows.map(function (row) {
       return row.slice(0, state.columns).map(function (value) { return value.trim(); });
@@ -416,13 +443,18 @@
     trimmedRows.forEach(function (row) {
       row.forEach(function (value) {
         if (!value) return;
+        if (CK.isNoChord(value)) {
+          if (!seen.has("no-chord")) {
+            seen.add("no-chord");
+            uniqueChords.push({ raw: value, chord: null, key: "no-chord", noChord: true });
+          }
+          return;
+        }
         const chord = CK.parseChord(value);
-        const key = chord
-          ? chord.rootPc + "|" + chord.qualityKey + "|" + (chord.bassPc === null ? "" : chord.bassPc)
-          : "invalid|" + value.toLowerCase();
+        const key = chord ? chordIdentity(chord) : "invalid|" + value.toLowerCase();
         if (!seen.has(key)) {
           seen.add(key);
-          uniqueChords.push({ raw: value, chord: chord });
+          uniqueChords.push({ raw: value, chord: chord, key: key });
         }
       });
     });
@@ -465,7 +497,7 @@
       '<section class="diagram-section" aria-labelledby="guitarHeading">' +
         '<div class="section-heading">' +
           '<h2 id="guitarHeading">Guitar</h2>' +
-          '<span>Fretting fingers in dots · notes include enharmonic names</span>' +
+          '<span>Fretting fingers in dots · notes include enharmonic names · pick a shape under each diagram</span>' +
         "</div>" +
         diagramGrid(uniqueChords, "guitar") +
       "</section>";
@@ -534,6 +566,7 @@
     }
     elements.printBtn.disabled = true;
     showToast("Preparing printable PDF…");
+    document.body.classList.add("is-capturing");
     window.html2canvas(elements.paper, {
       backgroundColor: "#fffdf8",
       scale: 2,
@@ -555,8 +588,10 @@
     }).catch(function () {
       showPrintHelp("Something went wrong while building the PDF.");
     }).then(function () {
+      document.body.classList.remove("is-capturing");
       elements.printBtn.disabled = false;
     }, function () {
+      document.body.classList.remove("is-capturing");
       elements.printBtn.disabled = false;
     });
   }
@@ -800,7 +835,7 @@
       for (let column = 0; column < columns; column += 1) {
         const raw = row[column] || "";
         const chord = raw ? CK.parseChord(raw) : null;
-        const label = chord ? chord.label : raw;
+        const label = chord ? chord.label : (CK.isNoChord(raw) ? "" : raw);
         cells.push('<td>' + escapeHtml(label) + "</td>");
       }
       return "<tr>" + cells.join("") + "</tr>";
@@ -835,8 +870,9 @@
     }
     return chunks.map(function (chunk) {
       const cells = chunk.map(function (item) {
+        if (item.noChord) return noChordCard(type);
         return type === "guitar"
-          ? guitarCard(item.raw, item.chord)
+          ? guitarCard(item)
           : pianoCard(item.raw, item.chord);
       }).join("");
       const pad = columns - chunk.length;
@@ -846,22 +882,57 @@
     }).join("");
   }
 
-  function guitarCard(raw, chord) {
+  function guitarCard(item) {
+    const raw = item.raw;
+    const chord = item.chord;
     if (!chord) {
       return invalidCard(raw, "guitar");
     }
-    const shape = CK.getGuitarShape(chord);
-    if (!shape) {
+    const voicings = CK.getGuitarVoicings(chord);
+    const stored = state.voicings[item.key];
+    const voicing = voicings.find(function (option) {
+      return option.id === stored;
+    }) || voicings[0];
+    if (!voicing) {
       return invalidCard(raw, "guitar");
     }
     const noteLabels = chord.notes.map(enharmonicLabel).join(" · ");
+    const shape = voicing.shape;
     return (
-      '<article class="chord-card guitar-card" aria-label="' + escapeHtml(chord.label) + ' guitar chord. Notes ' + escapeHtml(noteLabels) + '">' +
+      '<article class="chord-card guitar-card" aria-label="' + escapeHtml(chord.label) + " guitar chord, " +
+        escapeHtml(voicing.label) + ". Notes " + escapeHtml(noteLabels) + '">' +
         '<h3 class="chord-name">' + escapeHtml(chord.label) + "</h3>" +
         '<div class="diagram-wrap">' + renderGuitarSVG(shape, chord) + "</div>" +
+        voicingControl(chord, item.key, voicings, voicing) +
         '<p class="note-caption">' + escapeHtml(noteLabels) + "</p>" +
       "</article>"
     );
+  }
+
+  /* Screen-only picker: printed sheets never show the controls. */
+  function voicingControl(chord, key, voicings, selected) {
+    if (voicings.length < 2) return "";
+    const options = voicings.map(function (voicing) {
+      return '<option value="' + escapeHtml(voicing.id) + '"' +
+        (voicing.id === selected.id ? " selected" : "") + ">" +
+        escapeHtml(voicing.label) + "</option>";
+    }).join("");
+    return (
+      '<div class="voicing-control">' +
+        '<select class="voicing-select" data-chord="' + escapeHtml(key) + '"' +
+          ' aria-label="Chord shape for ' + escapeHtml(chord.label) + '">' +
+          options +
+        "</select>" +
+      "</div>"
+    );
+  }
+
+  function setVoicing(key, id) {
+    state.voicings[key] = id;
+    renderChart();
+    persist();
+    const select = elements.paper.querySelector('.voicing-select[data-chord="' + key + '"]');
+    if (select) select.focus();
   }
 
   function pianoCard(raw, chord) {
@@ -881,6 +952,32 @@
         '<h3 class="chord-name">' + escapeHtml(chord.label) + "</h3>" +
         '<p class="note-caption">' + escapeHtml(noteLabels) + "</p>" +
         '<p class="finger-caption">' + handLabel + " " + escapeHtml(voicing.fingerText) + "</p>" +
+      "</article>"
+    );
+  }
+
+  /*
+   * A bar with no chord still gets an empty neck/keyboard to write on. The name
+   * slot is kept for alignment but left blank, so no "N.C." title is printed.
+   */
+  function noChordCard(type) {
+    const blankHeading = '<h3 class="chord-name" aria-hidden="true">&nbsp;</h3>';
+    if (type === "guitar") {
+      return (
+        '<article class="chord-card guitar-card is-no-chord" aria-label="No chord, empty guitar fretboard">' +
+          blankHeading +
+          '<div class="diagram-wrap">' + renderGuitarSVG(null, { label: "NC" }) + "</div>" +
+          '<div class="voicing-placeholder" aria-hidden="true"></div>' +
+          '<p class="note-caption" aria-hidden="true">&nbsp;</p>' +
+        "</article>"
+      );
+    }
+    return (
+      '<article class="chord-card piano-card is-no-chord" aria-label="No chord, empty keyboard">' +
+        '<div class="diagram-wrap">' + renderPianoSVG(null, { label: "NC" }) + "</div>" +
+        blankHeading +
+        '<p class="note-caption" aria-hidden="true">&nbsp;</p>' +
+        '<p class="finger-caption" aria-hidden="true">&nbsp;</p>' +
       "</article>"
     );
   }
@@ -907,7 +1004,8 @@
     const fretCount = 5;
     const gap = (bottom - top) / fretCount;
     const stringGap = (right - left) / 5;
-    const baseFret = shape.baseFret || 1;
+    const blank = !shape;
+    const baseFret = blank ? 1 : (shape.baseFret || 1);
     const parts = [];
     const stringX = function (index) { return left + index * stringGap; };
     const fretY = function (fret) {
@@ -917,8 +1015,11 @@
     const lineBottom = bottom;
 
     parts.push('<svg class="guitar-svg" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' +
-      escapeHtml(chord.label) + " guitar chord diagram. Frets " + shape.frets.join(",") +
-      ". Fingering " + shape.fingers.join(",") + '.">');
+      (blank
+        ? "Empty guitar fretboard for a bar with no chord"
+        : escapeHtml(chord.label) + " guitar chord diagram. Frets " + shape.frets.join(",") +
+          ". Fingering " + shape.fingers.join(",") + ".") +
+      '">');
 
     for (let string = 0; string < 6; string += 1) {
       const x = stringX(string);
@@ -933,6 +1034,11 @@
       parts.push('<line x1="' + left + '" y1="' + y + '" x2="' + right + '" y2="' + y +
         '" stroke="#1e1d1a" stroke-width="' + (isNut ? 4.2 : 1.1) + '"' +
         (isNut ? ' stroke-linecap="round"' : "") + "></line>");
+    }
+
+    if (blank) {
+      parts.push("</svg>");
+      return parts.join("");
     }
 
     if (baseFret > 1) {
@@ -997,13 +1103,17 @@
     const blackWidth = 13.5;
     const blackHeight = 59;
     const noteByMidi = new Map();
-    voicing.notes.forEach(function (note) { noteByMidi.set(note.midi, note); });
+    const notes = voicing ? voicing.notes : [];
+    notes.forEach(function (note) { noteByMidi.set(note.midi, note); });
     const parts = [];
 
     parts.push('<svg class="piano-svg" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' +
-      escapeHtml(chord.label) + " keyboard chord. Notes " + escapeHtml(voicing.noteText) +
-      ". " + (voicing.hand === "left" ? "Left" : "Right") + "-hand fingering " +
-      escapeHtml(voicing.fingerText) + '.">');
+      (voicing
+        ? escapeHtml(chord.label) + " keyboard chord. Notes " + escapeHtml(voicing.noteText) +
+          ". " + (voicing.hand === "left" ? "Left" : "Right") + "-hand fingering " +
+          escapeHtml(voicing.fingerText) + "."
+        : "Empty keyboard for a bar with no chord") +
+      '">');
 
     whiteMidi.forEach(function (midi, index) {
       const x = index * whiteWidth;

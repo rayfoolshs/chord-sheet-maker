@@ -11,6 +11,24 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.4.0] - 2026-11-01
+
+### Added
+
+- **No chord (NC).** Type `NC` (or `N.C.`) in a progression slot for a silent bar.
+  It is offered first in the chord suggestions, validates like any other entry, and
+  normalises to `NC`. The sheet shows a blank guitar fretboard and a blank keyboard
+  for that bar (no chord name printed), while the Chord Progression table leaves the
+  cell blank.
+- Every guitar diagram in the preview now has a **chord shape picker**. Choose the
+  curated open shape, an E-shape barre, an A-shape barre, the same movable shape
+  an octave higher, a compact four-string voicing on the D G B E strings, or a
+  three-note voicing on D G B / G B E in root, first or second inversion.
+  The diagram redraws with the right fret position, barre and fingering, and
+  3-/4-string voicings are generated from the chord's own tones, so extensions
+  (9ths, 6ths, sevenths) stay intact. Selections are keyed by chord, saved with
+  the sheet, and never appear on the printed page or the generated PDF.
+
 ## [1.3.2] - 2026-10-31
 
 ### Fixed

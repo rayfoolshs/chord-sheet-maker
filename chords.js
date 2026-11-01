@@ -275,6 +275,13 @@
     return null;
   }
 
+  function isNoChord(input) {
+    const value = (input || "").trim();
+    if (!value) return false;
+    const simplified = value.replace(/[\s.]/g, "").toLowerCase();
+    return simplified === "nc" || simplified === "nochord";
+  }
+
   function parseChord(input) {
     const source = (input || "").trim();
     if (!source) return null;
@@ -432,6 +439,373 @@
     return buildMovable(choices[0].template, choices[0].fret);
   }
 
+  /* Highest fret a movable voicing may start on, so diagrams stay readable. */
+  const MAX_VOICING_FRET = 15;
+
+  /* Root positions on the D string, for the four-string (D G B E) shapes. */
+  const D_ROOT_FRET = {
+    0: 10,
+    1: 11,
+    2: 0,
+    3: 1,
+    4: 2,
+    5: 3,
+    6: 4,
+    7: 5,
+    8: 6,
+    9: 7,
+    10: 8,
+    11: 9
+  };
+  const FOUR_STRING_STRINGS = [2, 3, 4, 5];
+  const MAX_FOUR_STRING_SPAN = 4;
+
+  function shapeSignature(shape) {
+    return shape.frets.join(",") + "|" + (shape.baseFret || 1);
+  }
+
+  function describeVoicing(shape, family) {
+    const baseFret = shape.baseFret || 1;
+    const familyName = family === "Open" ? "Open shape" : family + " shape";
+    if (shape.barre) return "Barre · " + baseFret + "fr · " + familyName;
+    if (baseFret === 1) return "Open shape";
+    return baseFret + "fr · " + familyName;
+  }
+
+  /* The tones a voicing should try to keep: drop the perfect fifth, keep the colour. */
+  function voicingCore(quality) {
+    const intervals = quality.intervals;
+    const hasThird = intervals.indexOf(3) !== -1 || intervals.indexOf(4) !== -1;
+    if (!hasThird) return intervals;
+    return intervals.filter(function (interval) { return interval !== 7; });
+  }
+
+  function buildPartialShape(stringIndexes, frets) {
+    const allFrets = [-1, -1, -1, -1, -1, -1];
+    const fingers = [0, 0, 0, 0, 0, 0];
+    const runs = [];
+
+    stringIndexes.forEach(function (stringIndex, position) {
+      allFrets[stringIndex] = frets[position];
+    });
+
+    let position = 0;
+    while (position < stringIndexes.length) {
+      const fret = frets[position];
+      if (fret <= 0) {
+        position += 1;
+        continue;
+      }
+      let end = position;
+      while (end + 1 < frets.length && frets[end + 1] === fret) end += 1;
+      if (end > position) {
+        runs.push({
+          fret: fret,
+          from: stringIndexes[position],
+          to: stringIndexes[end]
+        });
+      }
+      position = end + 1;
+    }
+
+    runs.sort(function (a, b) {
+      return (b.to - b.from) - (a.to - a.from) || a.fret - b.fret;
+    });
+
+    let barre = null;
+    if (runs.length) {
+      barre = { fret: runs[0].fret, from: runs[0].from, to: runs[0].to, finger: 1 };
+      for (let index = barre.from; index <= barre.to; index += 1) fingers[index] = 1;
+    }
+
+    const remaining = [];
+    stringIndexes.forEach(function (stringIndex, position) {
+      if (allFrets[stringIndex] <= 0 || fingers[stringIndex]) return;
+      remaining.push({ stringIndex: stringIndex, fret: allFrets[stringIndex] });
+    });
+    remaining.sort(function (a, b) {
+      return a.fret - b.fret || a.stringIndex - b.stringIndex;
+    });
+
+    let nextFinger = barre ? 2 : 1;
+    remaining.forEach(function (note) {
+      fingers[note.stringIndex] = nextFinger;
+      nextFinger += 1;
+    });
+
+    const lowestFret = Math.min.apply(null, frets);
+    return {
+      frets: allFrets,
+      fingers: fingers,
+      barre: barre,
+      baseFret: lowestFret > 0 ? lowestFret : 1
+    };
+  }
+
+  /*
+   * Compact root-position voicings on the top four strings (D G B E).
+   * Enumerates every playable combination inside a four-fret window whose
+   * lowest note is the root, then keeps the two that hold most of the chord's
+   * character tones with the tightest stretch.
+   */
+  function fourStringVoicings(chord) {
+    if (!chord) return [];
+    const chordPcs = chord.notes.map(function (note) { return note.pc; });
+    const corePcs = voicingCore(chord.quality).map(function (interval) {
+      return mod12(chord.rootPc + interval);
+    });
+    const rootFret = D_ROOT_FRET[chord.rootPc];
+    const lowest = Math.max(0, rootFret - MAX_FOUR_STRING_SPAN);
+    const highest = rootFret + MAX_FOUR_STRING_SPAN;
+    const candidates = [];
+    const seen = new Set();
+
+    for (let gFret = lowest; gFret <= highest; gFret += 1) {
+      for (let bFret = lowest; bFret <= highest; bFret += 1) {
+        for (let eFret = lowest; eFret <= highest; eFret += 1) {
+          const frets = [rootFret, gFret, bFret, eFret];
+          const span = Math.max.apply(null, frets) - Math.min.apply(null, frets);
+          if (span > MAX_FOUR_STRING_SPAN) continue;
+
+          const pcs = frets.map(function (fret, index) {
+            return mod12(STRING_OPEN_PC[FOUR_STRING_STRINGS[index]] + fret);
+          });
+          const inChord = pcs.every(function (pc) {
+            return chordPcs.indexOf(pc) !== -1;
+          });
+          if (!inChord) continue;
+
+          const signature = frets.join(",");
+          if (seen.has(signature)) continue;
+          seen.add(signature);
+
+          const hits = new Set(pcs.filter(function (pc) {
+            return corePcs.indexOf(pc) !== -1;
+          })).size;
+          candidates.push({
+            frets: frets,
+            hits: hits,
+            distinct: new Set(pcs).size,
+            span: span,
+            lowest: Math.min.apply(null, frets)
+          });
+        }
+      }
+    }
+
+    candidates.sort(function (a, b) {
+      return b.hits - a.hits ||
+        b.distinct - a.distinct ||
+        a.span - b.span ||
+        a.lowest - b.lowest;
+    });
+
+    /* One shape per neck position: a second voicing at the same frets is noise. */
+    const usedPositions = new Set();
+    const chosen = [];
+    for (let index = 0; index < candidates.length && chosen.length < 2; index += 1) {
+      const candidate = candidates[index];
+      if (usedPositions.has(candidate.lowest)) continue;
+      usedPositions.add(candidate.lowest);
+      chosen.push(candidate);
+    }
+
+    return chosen.map(function (candidate) {
+      const shape = buildPartialShape([2, 3, 4, 5], candidate.frets);
+      return {
+        id: "d" + candidate.frets.join("-"),
+        label: "4-string · " + (candidate.lowest > 0 ? candidate.lowest + "fr" : "open"),
+        shape: shape
+      };
+    });
+  }
+
+  const THREE_STRING_GROUPS = [
+    { name: "DGB", strings: [2, 3, 4] },
+    { name: "GBE", strings: [3, 4, 5] }
+  ];
+  const MAX_THREE_STRING_SPAN = 4;
+  const INVERSION_NAMES = ["root", "1st inv", "2nd inv", "3rd inv", "4th inv"];
+
+  /*
+   * Three-note voicings on adjacent string groups (D G B and G B E), one per
+   * inversion. Keeping the root and the third (or every character tone for
+   * sus/dim/aug/power chords) means an inversion reads as the same chord, only
+   * with a different note in the bass.
+   */
+  function threeStringVoicings(chord) {
+    if (!chord) return [];
+    const quality = chord.quality;
+    const chordPcs = chord.notes.map(function (note) { return note.pc; });
+    const corePcs = voicingCore(quality).map(function (interval) {
+      return mod12(chord.rootPc + interval);
+    });
+    const requiredHits = corePcs.length <= 3 ? corePcs.length : corePcs.length - 1;
+    const requiredNotes = Math.min(3, new Set(chordPcs).size);
+    const voicings = [];
+
+    THREE_STRING_GROUPS.forEach(function (group) {
+      const bestForInversion = new Map();
+
+      for (let start = 0; start + MAX_THREE_STRING_SPAN <= MAX_VOICING_FRET; start += 1) {
+        const options = group.strings.map(function (stringIndex) {
+          const frets = [];
+          for (let fret = start; fret <= start + MAX_THREE_STRING_SPAN; fret += 1) {
+            if (chordPcs.indexOf(mod12(STRING_OPEN_PC[stringIndex] + fret)) !== -1) {
+              frets.push(fret);
+            }
+          }
+          return frets;
+        });
+
+        options[0].forEach(function (firstFret) {
+          options[1].forEach(function (secondFret) {
+            options[2].forEach(function (thirdFret) {
+              const frets = [firstFret, secondFret, thirdFret];
+              const pcs = frets.map(function (fret, index) {
+                return mod12(STRING_OPEN_PC[group.strings[index]] + fret);
+              });
+              if (new Set(pcs).size < requiredNotes) return;
+
+              const hits = new Set(pcs.filter(function (pc) {
+                return corePcs.indexOf(pc) !== -1;
+              })).size;
+              if (hits < requiredHits) return;
+              if (pcs.indexOf(chord.rootPc) === -1) return;
+
+              const bassPc = pcs[0];
+              const inversion = quality.intervals.findIndex(function (interval) {
+                return mod12(chord.rootPc + interval) === bassPc;
+              });
+              if (inversion < 0) return;
+
+              const highestInterval = Math.max.apply(null, quality.intervals.filter(function (interval) {
+                return pcs.indexOf(mod12(chord.rootPc + interval)) !== -1;
+              }));
+              const candidate = {
+                frets: frets,
+                hits: hits,
+                highestInterval: highestInterval,
+                span: Math.max.apply(null, frets) - Math.min.apply(null, frets),
+                lowest: Math.min.apply(null, frets)
+              };
+
+              const previous = bestForInversion.get(inversion);
+              if (!previous ||
+                candidate.hits > previous.hits ||
+                (candidate.hits === previous.hits && candidate.highestInterval < previous.highestInterval) ||
+                (candidate.hits === previous.hits && candidate.highestInterval === previous.highestInterval &&
+                  (candidate.span < previous.span ||
+                    (candidate.span === previous.span && candidate.lowest < previous.lowest)))) {
+                bestForInversion.set(inversion, candidate);
+              }
+            });
+          });
+        });
+      }
+
+      Array.from(bestForInversion.keys())
+        .sort(function (a, b) { return a - b; })
+        .slice(0, 3)
+        .forEach(function (inversion) {
+          const candidate = bestForInversion.get(inversion);
+          voicings.push({
+            id: "t" + group.name.toLowerCase() + "-" + inversion + "-" + candidate.frets.join("-"),
+            label: "3-string · " + group.name + " · " + (INVERSION_NAMES[inversion] || inversion + "th inv") +
+              " · " + (candidate.lowest > 0 ? candidate.lowest + "fr" : "open"),
+            shape: buildPartialShape(group.strings, candidate.frets)
+          });
+        });
+    });
+
+    return voicings;
+  }
+
+  /*
+   * Every shape that plays this chord: the curated open shape where one exists,
+   * then the movable E- and A-shape barre forms (plus the octave-up position
+   * when it still fits on the neck), then compact top-four-string voicings.
+   * The shape the app would pick by default is always first, so callers can
+   * treat index 0 as "unchanged".
+   */
+  function getGuitarVoicings(chord) {
+    if (!chord) return [];
+    const quality = chord.quality;
+    const candidates = [];
+
+    const open = OPEN_SHAPES[chord.root.ascii + quality.suffix];
+    if (open) {
+      candidates.push({
+        id: "open",
+        family: "Open",
+        shape: {
+          frets: open.frets.slice(),
+          fingers: open.fingers.slice(),
+          barre: open.barre,
+          baseFret: 1
+        }
+      });
+    }
+
+    [
+      { family: "E", template: quality.eShape, roots: E_ROOT_FRET },
+      { family: "A", template: quality.aShape, roots: A_ROOT_FRET }
+    ].forEach(function (choice) {
+      if (!choice.template) return;
+      const baseFret = choice.roots[chord.rootPc];
+      const positions = [baseFret];
+      if (baseFret + 12 <= MAX_VOICING_FRET) positions.push(baseFret + 12);
+      positions.forEach(function (fret) {
+        candidates.push({
+          id: choice.family.toLowerCase() + fret,
+          family: choice.family,
+          shape: buildMovable(choice.template, fret)
+        });
+      });
+    });
+
+    fourStringVoicings(chord).forEach(function (voicing) {
+      candidates.push({
+        id: voicing.id,
+        label: voicing.label,
+        shape: voicing.shape
+      });
+    });
+
+    threeStringVoicings(chord).forEach(function (voicing) {
+      candidates.push({
+        id: voicing.id,
+        label: voicing.label,
+        shape: voicing.shape
+      });
+    });
+
+    const defaultShape = getGuitarShape(chord);
+    const defaultKey = defaultShape ? shapeSignature(defaultShape) : null;
+    const seen = new Set();
+    const voicings = [];
+
+    candidates.forEach(function (candidate) {
+      const key = shapeSignature(candidate.shape);
+      if (seen.has(key)) return;
+      seen.add(key);
+      voicings.push({
+        id: candidate.id,
+        label: candidate.label ||
+          describeVoicing(candidate.shape, candidate.family),
+        shape: candidate.shape
+      });
+    });
+
+    const defaultIndex = voicings.findIndex(function (voicing) {
+      return shapeSignature(voicing.shape) === defaultKey;
+    });
+    if (defaultIndex > 0) {
+      voicings.unshift(voicings.splice(defaultIndex, 1)[0]);
+    }
+    return voicings;
+  }
+
   function guitarNotes(shape) {
     if (!shape) return [];
     const notes = [];
@@ -499,6 +873,7 @@
   }
 
   const CHORD_SUGGESTIONS = [
+    "NC",
     "C", "Cm", "C7", "Cmaj7", "Cm7", "Cadd9", "Csus2", "Csus4", "C6", "Cm6", "Cdim", "Caug",
     "D", "Dm", "D7", "Dmaj7", "Dm7", "Dsus2", "Dsus4",
     "E", "Em", "E7", "Emaj7", "Em7", "Esus4",
@@ -515,7 +890,9 @@
     OPEN_SHAPES: OPEN_SHAPES,
     CHORD_SUGGESTIONS: CHORD_SUGGESTIONS,
     parseChord: parseChord,
+    isNoChord: isNoChord,
     getGuitarShape: getGuitarShape,
+    getGuitarVoicings: getGuitarVoicings,
     guitarNotes: guitarNotes,
     getPianoVoicing: getPianoVoicing
   };

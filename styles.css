@@ -827,6 +827,67 @@ a:focus-visible {
   max-width: 280px;
 }
 
+/* Per-diagram shape picker — a live-preview affordance that never prints. */
+.voicing-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 5px auto 0;
+}
+
+.voicing-select {
+  max-width: 100%;
+  padding: 3px 20px 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: #f7f2e8;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23837b6f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 8px 5px;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.015em;
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.voicing-select:hover {
+  border-color: var(--line-dark);
+  background-color: #f3ede1;
+}
+
+.voicing-select:focus-visible {
+  outline: 2px solid var(--ink-soft);
+  outline-offset: 1px;
+}
+
+body.is-fitting .voicing-control,
+body.is-capturing .voicing-control,
+body.is-fitting .voicing-placeholder,
+body.is-capturing .voicing-placeholder {
+  display: none !important;
+}
+
+/* Keeps the no-chord neck level with the other diagrams on screen only. */
+.voicing-placeholder {
+  height: 21px;
+  margin-top: 5px;
+}
+
+/* No-chord cards keep the name/caption space for alignment but print nothing. */
+.is-no-chord .chord-name,
+.is-no-chord .note-caption,
+.is-no-chord .finger-caption {
+  visibility: hidden;
+}
+
 .guitar-svg,
 .piano-svg {
   display: block;
@@ -1323,6 +1384,12 @@ body.print-help-open {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
 
+  .voicing-select {
+    padding: 3px 17px 3px 7px;
+    font-size: 8px;
+    background-position: right 6px center;
+  }
+
   .sheet-rule {
     margin: 24px auto;
   }
@@ -1388,6 +1455,8 @@ body.is-fitting .preview-section {
   .editor-card,
   .preview-heading,
   .toast,
+  .voicing-control,
+  .voicing-placeholder,
   .print-help {
     display: none !important;
   }

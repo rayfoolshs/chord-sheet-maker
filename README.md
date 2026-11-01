@@ -16,7 +16,13 @@ Type a progression (up to 12 rows × 8 chords) and the app renders a sheet you c
 save as PDF:
 
 - **Guitar** — chord diagrams with fingering, using curated open shapes where they exist and
-  movable E-/A-shape barre chords otherwise, with automatic barre detection.
+  movable E-/A-shape barre chords otherwise, with automatic barre detection. Each diagram
+  has a shape picker so a chord can be shown as an open shape, either barre form, the
+  same shape an octave up, a four-string voicing on the D G B E strings, or a three-note
+  D G B / G B E voicing in root, first or second inversion.
+- **No chord (NC)** — type `NC` (or `N.C.`) for a silent bar. The sheet shows an empty
+  fretboard and keyboard (no chord name) so the layout stays consistent, while the
+  progression table leaves that cell blank.
 - **Keyboard** — chord tones mapped to one octave with right/left-hand fingering.
 - **Progression table** — the chords laid out as a chart, with the song title and key.
 
@@ -35,8 +41,11 @@ Root `[A–G]` with `#`, `b`, `♯`, `♭`, optional slash bass, and the qualiti
 2. Enter chords into the grid. `Space` or `Enter` moves to the next slot and adds a row at
    the end when you run out.
 3. Toggle the Guitar and Keyboard sections on or off.
-4. Choose how many chords per row and which hand to show for piano fingering.
-5. **Print / Save PDF** produces the A4 sheet.
+4. Use the picker under any guitar diagram to swap in a different shape for that chord
+   (open, E-shape barre, A-shape barre, octave-up position, a top-four-string voicing on
+   D G B E, or a three-string D G B / G B E inversion).
+5. Choose how many chords per row and which hand to show for piano fingering.
+6. **Print / Save PDF** produces the A4 sheet.
 
 Everything is stored in the browser, so a refresh keeps your work.
 
@@ -58,7 +67,9 @@ computer, **Print / Save PDF** opens the usual print dialog directly.
 | `styles.css` | Paper aesthetic plus print stylesheet |
 | `html2canvas.min.js` | Vendored html2canvas 1.4.1 (MIT) — rasterises the sheet for iPad PDF printing |
 | `BUILD_PROMPT.md` | The specification the app was built from |
-| `CHANGELOG.md` | Version history (current: v1.3.2) |
+| `CHANGELOG.md` | Version history (current: v1.4.0) |
+| `UPDATES.md` | Running log of every addition, change and removal |
+| `AGENTS.md` | Maintenance rules, including keeping `UPDATES.md` current |
 
 ## Run it
 
