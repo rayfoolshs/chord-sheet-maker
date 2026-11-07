@@ -24,6 +24,7 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 ## Editor UI
 
 - Header brand lockup: "Chord Sheet Studio" logo/title with a "Created by Ray Foo · www.rayfooproductions.com" credit line beneath it (link opens in a new tab), plus Reset and Print/Save PDF actions.
+- Header toggle switches for **Guitar**, **Keyboard** and **Progression**, letting either diagram section or the progression table be shown or hidden in the live preview and the printed sheet. The choices persist with the sheet state.
 - Song title input (blank falls back to "Untitled Song").
 - Segmented controls for "Chords per row" (1–8) and "Piano fingering" (RH/LH).
 - A progression grid of inputs (up to 12 rows × 8 columns) with row numbers, per-row remove buttons, and an "Add row" button that disables at the limit.
@@ -35,7 +36,7 @@ Create a standalone, dependency-free web app (plain HTML/CSS/JS, no build step, 
 
 ## Live preview (A4 paper)
 
-- Centered paper sheet with the song title, Guitar diagram section, a divider rule, Keyboard diagram section, a Chord Progression table, and a footer attributing "Created by Ray Foo" with a link to `www.rayfooproductions.com`.
+- Centered paper sheet with the song title, Guitar diagram section, a divider rule, Keyboard diagram section, a Chord Progression table, and a footer attributing "Created by Ray Foo" with a link to `www.rayfooproductions.com`. The Guitar, Keyboard and Progression sections follow their header toggles; hidden sections are omitted from the sheet entirely.
 - Show only unique chords (dedupe by root + quality + bass), up to 8 per grid row.
 - Guitar cards: SVG fretboard (6 strings, 5 frets, nut, open/muted markers, finger-numbered dots, barre bars, `Nfr` label for higher positions), chord name and enharmonic note caption.
 - Piano cards: SVG keyboard from C4 to B5 with black keys, red dots numbered with the chosen hand's fingering, chord name, note caption, and fingering caption.

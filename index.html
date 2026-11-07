@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f2ede4">
   <meta name="description" content="Turn a chord progression into a printable guitar and keyboard chord sheet with fingering.">
-  <meta name="app-version" content="1.4.1">
-  <title>Chord Sheet Studio v1.4.1</title>
-  <link rel="stylesheet" href="styles.css?v=1.4.1">
+  <meta name="app-version" content="1.4.2">
+  <title>Chord Sheet Studio v1.4.2</title>
+  <link rel="stylesheet" href="styles.css?v=1.4.2">
 </head>
 <body>
   <header class="app-header">
     <div class="brand-lockup">
-      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.4.1 home">
+      <a class="brand" href="./" aria-label="Chord Sheet Studio v1.4.2 home">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 44 44" role="presentation">
             <rect x="2" y="2" width="40" height="40" rx="13"></rect>
@@ -21,7 +21,7 @@
           </svg>
         </span>
         <span class="brand-copy">
-          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.4.1</span></span>
+          <span class="brand-name">Chord Sheet <em>Studio</em><span class="brand-version">v1.4.2</span></span>
           <span class="brand-tagline">Guitar + keyboard charts, ready to print</span>
         </span>
       </a>
@@ -36,6 +36,10 @@
         <button class="toggle" id="keyboardToggle" type="button" role="switch" aria-checked="true">
           <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
           <span class="toggle-label">Keyboard</span>
+        </button>
+        <button class="toggle" id="progressionToggle" type="button" role="switch" aria-checked="true">
+          <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+          <span class="toggle-label">Progression</span>
         </button>
       </div>
       <button class="btn btn-quiet" id="resetBtn" type="button">Reset example</button>
@@ -140,8 +144,8 @@
     </div>
   </div>
 
-  <script src="html2canvas.min.js?v=1.4.1"></script>
-  <script src="chords.js?v=1.4.1"></script>
-  <script src="app.js?v=1.4.1"></script>
+  <script src="html2canvas.min.js?v=1.4.2"></script>
+  <script src="chords.js?v=1.4.2"></script>
+  <script src="app.js?v=1.4.2"></script>
 </body>
 </html>

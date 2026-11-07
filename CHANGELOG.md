@@ -11,6 +11,16 @@ on `styles.css`, `chords.js` and `app.js` in `index.html`; GitHub Pages caches
 assets for ten minutes and the query string is what makes a new deploy visible
 immediately.
 
+## [1.4.2] - 2026-11-07
+
+### Added
+
+- **Progression** toggle in the header, beside the Guitar and Keyboard toggles,
+  so the Chord Progression table can be shown or hidden on the sheet. The setting
+  is saved with the rest of the sheet state.
+- The empty-sheet message now names only the sections that are switched on, and
+  prompts you to enable one when all three are off.
+
 ## [1.4.1] - 2026-11-01
 
 ### Fixed

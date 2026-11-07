@@ -28,6 +28,10 @@ Working notes for anyone (human or agent) changing Chord Sheet Studio.
   is plain UMD and can be required from Node for validation.
 - Persisted state is versioned under `chord-sheet-studio:v1` in
   `localStorage`; new keys must be validated on load and tolerate stale data.
+- Section visibility (`showGuitar`, `showKeyboard`, `showProgression`) is saved
+  with the sheet state and read back permissively, so older saves without the
+  newer keys keep working. The Progression toggle controls the sheet's chord
+  table only; it does not remove entries from the editor.
 - Keep the paper aesthetic: ink, paper and muted colour tokens from `:root`.
 
 ## Verifying changes

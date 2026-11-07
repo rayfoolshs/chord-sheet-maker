@@ -25,6 +25,7 @@ save as PDF:
   progression table leaves that cell blank.
 - **Keyboard** — chord tones mapped to one octave with right/left-hand fingering.
 - **Progression table** — the chords laid out as a chart, with the song title and key.
+  Guitar, Keyboard and Progression can each be switched on or off from the header.
 
 Chords are validated as you type and normalised on blur; invalid entries highlight red with
 a tooltip rather than being silently accepted.
@@ -40,7 +41,7 @@ Root `[A–G]` with `#`, `b`, `♯`, `♭`, optional slash bass, and the qualiti
 1. Type the song title (optional — falls back to "Untitled Song").
 2. Enter chords into the grid. `Space` or `Enter` moves to the next slot and adds a row at
    the end when you run out.
-3. Toggle the Guitar and Keyboard sections on or off.
+3. Toggle the Guitar, Keyboard and Progression sections on or off from the header.
 4. Use the picker under any guitar diagram to swap in a different shape for that chord
    (open, E-shape barre, A-shape barre, octave-up position, a top-four-string voicing on
    D G B E, or a three-string D G B / G B E inversion).
@@ -67,7 +68,7 @@ computer, **Print / Save PDF** opens the usual print dialog directly.
 | `styles.css` | Paper aesthetic plus print stylesheet |
 | `html2canvas.min.js` | Vendored html2canvas 1.4.1 (MIT) — rasterises the sheet for iPad PDF printing |
 | `BUILD_PROMPT.md` | The specification the app was built from |
-| `CHANGELOG.md` | Version history (current: v1.4.1) |
+| `CHANGELOG.md` | Version history (current: v1.4.2) |
 | `UPDATES.md` | Running log of every addition, change and removal |
 | `AGENTS.md` | Maintenance rules, including keeping `UPDATES.md` current |
 

@@ -10,6 +10,29 @@ nothing disappears silently.
 
 ---
 
+## 2026-11-07 — v1.4.2 (released, published to GitHub Pages)
+
+### Added
+
+- A third header toggle, **Progression**, sits beside the Guitar and Keyboard
+  toggles and shows or hides the Chord Progression table on the sheet. The
+  choice is persisted with the rest of the state and restored on reload.
+
+### Changed
+
+- The empty-sheet message now names only the sections that are currently
+  switched on, and prompts the user to enable a section when all three are off.
+- Version bumped to **1.4.2** in `index.html` (meta tag, title, brand badge,
+  fallback in `app.js` and the `?v=` asset query strings) so GitHub Pages
+  serves the new scripts immediately. `README.md` and `CHANGELOG.md` record
+  the release.
+
+### Removed
+
+- Nothing removed.
+
+---
+
 ## 2026-11-01 — v1.4.1 (released, published to GitHub Pages)
 
 ### Fixed

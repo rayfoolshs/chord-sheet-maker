@@ -10,7 +10,7 @@
   /* Printed sheet box (A4 minus a 2 mm safety margin) in CSS pixels. */
   const PRINT_SHEET_HEIGHT_PX = 295 * MM_TO_PX;
   const VERSION_META = document.querySelector('meta[name="app-version"]');
-  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.4.1";
+  const APP_VERSION = (VERSION_META && VERSION_META.getAttribute("content")) || "1.4.2";
   let pendingPdf = null;
   let pendingPdfName = "chord-sheet.pdf";
   let pendingPdfUrl = null;
@@ -22,6 +22,7 @@
     hand: "right",
     showGuitar: true,
     showKeyboard: true,
+    showProgression: true,
     voicings: {},
     rows: [
       makeRow(["G", "G", "C", "C"]),
@@ -35,6 +36,7 @@
     handControl: document.getElementById("handControl"),
     guitarToggle: document.getElementById("guitarToggle"),
     keyboardToggle: document.getElementById("keyboardToggle"),
+    progressionToggle: document.getElementById("progressionToggle"),
     progressionEditor: document.getElementById("progressionEditor"),
     slotHint: document.getElementById("slotHint"),
     addRowBtn: document.getElementById("addRowBtn"),
@@ -97,6 +99,7 @@
       hand: DEFAULT_STATE.hand,
       showGuitar: DEFAULT_STATE.showGuitar,
       showKeyboard: DEFAULT_STATE.showKeyboard,
+      showProgression: DEFAULT_STATE.showProgression,
       voicings: {},
       rows: DEFAULT_STATE.rows.map(function (row) { return row.slice(); })
     };
@@ -117,6 +120,7 @@
         hand: saved.hand === "left" ? "left" : "right",
         showGuitar: saved.showGuitar !== false,
         showKeyboard: saved.showKeyboard !== false,
+        showProgression: saved.showProgression !== false,
         voicings: sanitizeVoicings(saved.voicings),
         rows: rows
       };
@@ -191,6 +195,13 @@
 
     elements.keyboardToggle.addEventListener("click", function () {
       state.showKeyboard = !state.showKeyboard;
+      renderControls();
+      renderChart();
+      persist();
+    });
+
+    elements.progressionToggle.addEventListener("click", function () {
+      state.showProgression = !state.showProgression;
       renderControls();
       renderChart();
       persist();
@@ -383,6 +394,7 @@
     elements.addRowBtn.disabled = state.rows.length >= MAX_ROWS;
     elements.guitarToggle.setAttribute("aria-checked", state.showGuitar ? "true" : "false");
     elements.keyboardToggle.setAttribute("aria-checked", state.showKeyboard ? "true" : "false");
+    elements.progressionToggle.setAttribute("aria-checked", state.showProgression ? "true" : "false");
   }
 
   function renderEditor() {
@@ -472,11 +484,18 @@
 
     if (!uniqueChords.length) {
       const shown = [];
-      if (state.showGuitar) shown.push("guitar");
-      if (state.showKeyboard) shown.push("keyboard");
-      const message = shown.length
-        ? "Add a chord or two to the progression above to create " + shown.join(" and ") + " diagrams."
-        : "Add a chord or two to the progression above to build the chord progression table.";
+      if (state.showGuitar) shown.push("guitar diagrams");
+      if (state.showKeyboard) shown.push("keyboard diagrams");
+      if (state.showProgression) shown.push("the chord progression table");
+      let message;
+      if (!shown.length) {
+        message = "Turn on a section in the header to display your chart.";
+      } else if (shown.length === 1) {
+        message = "Add a chord or two to the progression above to create " + shown[0] + ".";
+      } else {
+        message = "Add a chord or two to the progression above to create " +
+          shown.slice(0, -1).join(", ") + " and " + shown[shown.length - 1] + ".";
+      }
       elements.paper.innerHTML =
         '<div class="sheet-body">' +
           titleMarkup +
@@ -519,7 +538,7 @@
       '<div class="sheet-body">' +
         titleMarkup +
         sections.join('<div class="sheet-rule" aria-hidden="true"></div>') +
-        progressionSection +
+        (state.showProgression ? progressionSection : "") +
       "</div>" +
       footerMarkup;
 
